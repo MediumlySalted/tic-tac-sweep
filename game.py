@@ -52,18 +52,19 @@ class Game(tk.Tk):
     # Functions for building widgets
     def load_all_widgets(self):
         self.load_main_menu()
+        self.load_sp_menu()
 
     def load_main_menu(self):
         # Title Widgets
         title = tk.Frame(
-            self,
+            self.main_menu,
             width=960,
             height=128,
             bg="#645E5B",
         )
         title.place(x=32, y=32)
         title_text = tk.Label(
-            title,
+            self.main_menu,
             text="Tic-Tac-Sweep",
             font=(GAME_FONT, 52),
             justify='center',
@@ -74,7 +75,7 @@ class Game(tk.Tk):
 
         # Button Widgets
         single_player_btn = tk.Button(
-            self,
+            self.main_menu,
             text="Single Player",
             font=(GAME_FONT, 32),
             fg="#4E4946",
@@ -93,7 +94,7 @@ class Game(tk.Tk):
         )
 
         multiplayer_btn = tk.Button(
-            self,
+            self.main_menu,
             text="Multi Player",
             font=(GAME_FONT, 32),
             fg="#4E4946",
@@ -112,7 +113,7 @@ class Game(tk.Tk):
         )
 
         how_to_play_btn = tk.Button(
-            self,
+            self.main_menu,
             text="How to Play",
             font=(GAME_FONT, 32),
             fg="#4E4946",
@@ -131,7 +132,7 @@ class Game(tk.Tk):
         )
 
         profile_btn = tk.Button(
-            self,
+            self.main_menu,
             text="Profile",
             font=(GAME_FONT, 32),
             fg="#4E4946",
@@ -189,28 +190,11 @@ class Game(tk.Tk):
 
     def clear_menu(self):
         print('Clearing screen...')
-        for widget in self.winfo_children():
-            print(f'Destroying {widget}')
-            widget.destroy()
+        for child in self.winfo_children():
+            print(f'Destroying {child}')
+            child.pack_forget()
         print("Screen cleared!")
 
-        
-
-class MainMenu(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        self.configure(
-            background='#AAAAAA'
-        )
-
-
-
-
-class SinglePlayerMenu(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-
-        
 
 
 def load_font(font_path):
@@ -225,7 +209,6 @@ def load_font(font_path):
     
     path_buffer = create_unicode_buffer(font_path)
     windll.gdi32.AddFontResourceExW(byref(path_buffer), 0x10, 0)
-
 
 def main():
     load_font("assets/RuneScape-Bold-12.ttf")
