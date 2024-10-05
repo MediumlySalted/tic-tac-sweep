@@ -1,8 +1,20 @@
 import tkinter as tk
+import colorsys
 from ctypes import windll, byref, create_unicode_buffer
 
-GAME_FONT = "RuneScape-Bold-12"
-background_color = '#645E5B'
+GAME_FONT = "RuneScape Bold 12"
+background_color = colorsys.hsv_to_rgb
+
+class Color:
+    def __init__(self, h, s, v):
+        self.hue = h / 360
+        self.saturation = s / 100
+        self.value = v / 100
+
+        self.rgb = colorsys.hsv_to_rgb(self.hue, self.saturation, self.value)
+
+    def darken(self):
+        pass
 
 
 class Game(tk.Tk):
@@ -55,6 +67,10 @@ class Game(tk.Tk):
         self.load_sp_menu()
 
     def load_main_menu(self):
+        '''
+        Function to load all widgets relating to the main menu screen. 
+        Contains: Title frame & text + 4 Buttons (sp, mp, h2p, profile)
+        '''
         # Title Widgets
         title = tk.Frame(
             self.main_menu,
@@ -84,7 +100,7 @@ class Game(tk.Tk):
             activebackground="#6A8A51",
             borderwidth=0,
             compound="center",
-            command=lambda: self.play_sp
+            command=self.play_sp
         )
         single_player_btn.place(
             x=128.0,
@@ -151,11 +167,15 @@ class Game(tk.Tk):
         )
 
     def load_sp_menu(self):
-        top_bar = tk.Frame(
+        '''
+        Loads all single player widgets.
+        Contains: Information bar
+        '''
+        information_bar = tk.Frame(
             self.sp_menu,
-            bg='grey'
+            bg=''
         )
-        top_bar.place(x=0, y=0, relheight=.1, relwidth=1)
+        information_bar.place(x=0, y=0, relheight=.1, relwidth=1)
 
     def load_mp_menu(self):
         pass
