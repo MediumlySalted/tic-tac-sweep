@@ -6,12 +6,11 @@ GAME_FONT = "RuneScape Bold 12"
 colors = {
     'background': Color(20, 10, 40),
     'yellow txt': Color(50, 100, 85),
-    'green btn': Color(95, 45, 70),
-    'red btn': Color(10, 45, 100),
-    'yellow btn': Color(55, 40, 75),
+    'green btn': Color(95, 45, 80),
+    'red btn': Color(10, 50, 90),
+    'yellow btn': Color(55, 60, 85),
     'purple btn': Color(280, 35, 85)
 }
-
 
 class Game(tk.Tk):
     def __init__(self):
@@ -171,6 +170,30 @@ class Game(tk.Tk):
             bg=colors['background'].dark()
         )
         information_bar.place(x=0, y=0, relheight=.1, relwidth=1)
+        self.back_icon = tk.PhotoImage(file='assets/left.png')
+        back_button = tk.Button(
+            information_bar,
+            image=self.back_icon,
+            background=colors['background'].dark(),
+            activebackground=colors['background'].dark(),
+            borderwidth=0,
+            compound="center",
+            command=self.go_main_menu
+        )
+        back_button.place(relx=.01, rely=0.1, relheight=.8, relwidth=.05)
+
+        self.quit_icon = tk.PhotoImage(file='assets/quit.png')
+        quit_button = tk.Button(
+            information_bar,
+            image=self.quit_icon,
+            background=colors['background'].dark(),
+            activebackground=colors['background'].dark(),
+            borderwidth=0,
+            compound="center",
+            command=self.quit
+        )
+        quit_button.place(relx=.925, rely=0.1, relheight=.8, relwidth=.05)
+
 
     def load_mp_menu(self):
         pass
@@ -184,13 +207,13 @@ class Game(tk.Tk):
     # Functions for displaying menu frames
     def go_main_menu(self):
         self.clear_menu()
-        print("Displaying main menu...")
+        print("\nDisplaying main menu...")
         self.main_menu.pack()
         print("Done!")
 
     def play_sp(self):
         self.clear_menu()
-        print("Displaying Single Player Menu...")
+        print("\nDisplaying Single Player Menu...")
         self.sp_menu.pack()
         print("Done!")
 
@@ -204,11 +227,15 @@ class Game(tk.Tk):
         pass
 
     def clear_menu(self):
-        print('Clearing screen...')
+        print('\nClearing screen...')
         for child in self.winfo_children():
             child.pack_forget()
-        print("Screen cleared!")
-
+        print("Done!")
+    
+    def quit(self):
+        print("\nExiting Game...")
+        self.destroy()
+        print("Done!")
 
 
 def load_font(font_path):
