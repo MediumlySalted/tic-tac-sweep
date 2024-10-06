@@ -180,7 +180,7 @@ class Game(tk.Tk):
             compound="center",
             command=self.go_main_menu
         )
-        back_button.place(relx=.01, rely=0.1, relheight=.8, relwidth=.05)
+        back_button.place(relx=.01, rely=0.2, relheight=.6, relwidth=.05)
 
         self.quit_icon = tk.PhotoImage(file='assets/quit.png')
         quit_button = tk.Button(
@@ -192,7 +192,7 @@ class Game(tk.Tk):
             compound="center",
             command=self.quit
         )
-        quit_button.place(relx=.925, rely=0.1, relheight=.8, relwidth=.05)
+        quit_button.place(relx=.99, rely=0.2, relheight=.6, relwidth=.05, anchor='ne')
 
 
     def load_mp_menu(self):
