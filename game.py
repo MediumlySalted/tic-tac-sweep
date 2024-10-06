@@ -1,32 +1,16 @@
 import tkinter as tk
-import colorsys
 from ctypes import windll, byref, create_unicode_buffer
 from color import Color
 
 GAME_FONT = "RuneScape Bold 12"
 colors = {
-    'background': Color(20, 9, 39.22),
+    'background': Color(20, 10, 40),
+    'yellow txt': Color(50, 100, 85),
+    'green btn': Color(95, 45, 70),
+    'red btn': Color(10, 45, 100),
+    'yellow btn': Color(55, 40, 75),
+    'purple btn': Color(280, 35, 85)
 }
-
-
-class Color:
-    def __init__(self, h, s, v):
-        self.hue = h / 360
-        self.saturation = s / 100
-        self.value = v / 100
-        self.hsv = (self.hue, self.saturation, self.value)
-
-    def __str__(self):
-        rgb = colorsys.hsv_to_rgb(*self.hsv)
-        return self.hexify(rgb)
-
-    def hexify(self, val):
-        hex_value = '#' + str(hex(int(val[0] * 256)))[2:] + str(hex(int(val[1] * 256)))[2:] + str(hex(int(val[2] * 256)))[2:]
-        return hex_value
-
-    def dark(self, dark_value=0.9):
-        rgb = colorsys.hsv_to_rgb(self.hue, self.saturation, self.value * dark_value)
-        return self.hexify(rgb)
 
 
 class Game(tk.Tk):
@@ -87,7 +71,7 @@ class Game(tk.Tk):
             self.main_menu,
             width=960,
             height=128,
-            bg="#645E5B",
+            bg=colors["background"],
         )
         title.place(x=32, y=32)
         title_text = tk.Label(
@@ -95,8 +79,8 @@ class Game(tk.Tk):
             text="Tic-Tac-Sweep",
             font=(GAME_FONT, 52),
             justify='center',
-            fg="#D8B600",
-            background='#645E5B',
+            fg=colors['yellow txt'],
+            background=colors["background"],
         )
         title_text.place(x=960/2, y=128/2, anchor='center')
 
@@ -105,10 +89,10 @@ class Game(tk.Tk):
             self.main_menu,
             text="Single Player",
             font=(GAME_FONT, 32),
-            fg="#4E4946",
-            activeforeground="#4E4946",
-            background="#7EA75F",
-            activebackground="#6A8A51",
+            fg=colors["background"].dark(),
+            activeforeground=colors["background"].dark(),
+            background=colors['green btn'],
+            activebackground=colors['green btn'].dark(),
             borderwidth=0,
             compound="center",
             command=self.play_sp
@@ -124,10 +108,10 @@ class Game(tk.Tk):
             self.main_menu,
             text="Multi Player",
             font=(GAME_FONT, 32),
-            fg="#4E4946",
-            activeforeground="#4E4946",
-            background="#A77D5F",
-            activebackground="#8D6950",
+            fg=colors["background"].dark(),
+            activeforeground=colors["background"].dark(),
+            background=colors['red btn'],
+            activebackground=colors['red btn'].dark(),
             borderwidth=0,
             compound="center",
             command=self.play_mp
@@ -143,10 +127,10 @@ class Game(tk.Tk):
             self.main_menu,
             text="How to Play",
             font=(GAME_FONT, 32),
-            fg="#4E4946",
-            activeforeground="#4E4946",
-            background="#A7A05F",
-            activebackground="#968F56",
+            fg=colors["background"].dark(),
+            activeforeground=colors["background"].dark(),
+            background=colors['yellow btn'],
+            activebackground=colors['yellow btn'].dark(),
             borderwidth=0,
             compound="center",
             command=self.h2p_menu
@@ -162,10 +146,10 @@ class Game(tk.Tk):
             self.main_menu,
             text="Profile",
             font=(GAME_FONT, 32),
-            fg="#4E4946",
-            activeforeground="#4E4946",
-            background="#AB73CD",
-            activebackground="#9162AD",
+            fg=colors["background"].dark(),
+            activeforeground=colors["background"].dark(),
+            background=colors['purple btn'],
+            activebackground=colors['purple btn'].dark(),
             borderwidth=0,
             compound="center",
             command=self.go_profile_menu
@@ -184,7 +168,7 @@ class Game(tk.Tk):
         '''
         information_bar = tk.Frame(
             self.sp_menu,
-            bg=colors['background'].dark(.8)
+            bg=colors['background'].dark()
         )
         information_bar.place(x=0, y=0, relheight=.1, relwidth=1)
 
@@ -222,7 +206,6 @@ class Game(tk.Tk):
     def clear_menu(self):
         print('Clearing screen...')
         for child in self.winfo_children():
-            print(f'Destroying {child}')
             child.pack_forget()
         print("Screen cleared!")
 
