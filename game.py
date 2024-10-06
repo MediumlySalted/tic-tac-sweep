@@ -1,20 +1,32 @@
 import tkinter as tk
 import colorsys
 from ctypes import windll, byref, create_unicode_buffer
+from color import Color
 
 GAME_FONT = "RuneScape Bold 12"
-background_color = colorsys.hsv_to_rgb
+colors = {
+    'background': Color(20, 9, 39.22),
+}
+
 
 class Color:
     def __init__(self, h, s, v):
         self.hue = h / 360
         self.saturation = s / 100
         self.value = v / 100
+        self.hsv = (self.hue, self.saturation, self.value)
 
-        self.rgb = colorsys.hsv_to_rgb(self.hue, self.saturation, self.value)
+    def __str__(self):
+        rgb = colorsys.hsv_to_rgb(*self.hsv)
+        return self.hexify(rgb)
 
-    def darken(self):
-        pass
+    def hexify(self, val):
+        hex_value = '#' + str(hex(int(val[0] * 256)))[2:] + str(hex(int(val[1] * 256)))[2:] + str(hex(int(val[2] * 256)))[2:]
+        return hex_value
+
+    def dark(self, dark_value=0.9):
+        rgb = colorsys.hsv_to_rgb(self.hue, self.saturation, self.value * dark_value)
+        return self.hexify(rgb)
 
 
 class Game(tk.Tk):
@@ -23,40 +35,39 @@ class Game(tk.Tk):
 
         self.geometry("1024x768")
         self.title = 'Tic-Tac-Sweep'
-        self.config(background=background_color)
+        self.config(background=colors['background'])
 
         # Menu Frames
         self.main_menu = tk.Frame(
             self,
-            bg=background_color,
+            bg=colors['background'],
             height=768,
             width=1024,
         )
         self.sp_menu = tk.Frame(
             self,
-            bg=background_color,
+            bg=colors['background'],
             height=768,
             width=1024,
         )
         self.mp_menu = tk.Frame(
             self,
-            bg=background_color,
+            bg=colors['background'],
             height=768,
             width=1024,
         )
         self.h2p_menu = tk.Frame(
             self,
-            bg=background_color,
+            bg=colors['background'],
             height=768,
             width=1024,
         )
         self.profile_menu = tk.Frame(
             self,
-            bg=background_color,
+            bg=colors['background'],
             height=768,
             width=1024,
         )
-
 
         self.load_all_widgets()
         self.go_main_menu()
@@ -173,7 +184,7 @@ class Game(tk.Tk):
         '''
         information_bar = tk.Frame(
             self.sp_menu,
-            bg=''
+            bg=colors['background'].dark(.8)
         )
         information_bar.place(x=0, y=0, relheight=.1, relwidth=1)
 
