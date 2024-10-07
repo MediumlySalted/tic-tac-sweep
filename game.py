@@ -9,7 +9,9 @@ colors = {
     'green btn': Color(95, 45, 80),
     'red btn': Color(10, 50, 90),
     'yellow btn': Color(55, 60, 85),
-    'purple btn': Color(280, 35, 85)
+    'purple btn': Color(280, 35, 85),
+    'red x': Color(0, 100, 100),
+    'cell': Color(0, 0, 80),
 }
 
 class Game(tk.Tk):
@@ -170,6 +172,17 @@ class Game(tk.Tk):
             bg=colors['background'].dark()
         )
         information_bar.place(x=0, y=0, relheight=.1, relwidth=1)
+
+        title_text = tk.Label(
+            information_bar,
+            text="Single Player",
+            font=(GAME_FONT, 32),
+            justify='center',
+            fg=colors['yellow txt'],
+            background=colors["background"].dark(),
+        )
+        title_text.place(relx=.5, rely=.5, anchor='center')
+
         self.back_icon = tk.PhotoImage(file='assets/left.png')
         back_button = tk.Button(
             information_bar,
@@ -194,6 +207,19 @@ class Game(tk.Tk):
         )
         quit_button.place(relx=.925, rely=0.1, relheight=.8, relwidth=.05)
 
+        minefield = tk.Frame(
+            self.sp_menu,
+            bg=colors['background'].dark(.6),
+            borderwidth=5
+        )
+        minefield.place(
+            relx=.35,
+            rely=.15,
+            relheight=.8,
+            relwidth=.6,
+        )
+
+        self.place_cells(minefield)
 
     def load_mp_menu(self):
         pass
@@ -225,6 +251,18 @@ class Game(tk.Tk):
 
     def go_profile_menu(self):
         pass
+
+    def place_cells(self, minefield):
+        for i in range(9):
+            for j in range(9):
+                cell = tk.Button(
+                    minefield,
+                    background=colors['cell'],
+                    activebackground=colors['cell'].dark(),
+                    borderwidth=1,
+                    relief='ridge'
+                )
+                cell.place(relx=j/9, rely=i/9, relwidth=1/9, relheight=1/9)
 
     def clear_menu(self):
         print('\nClearing screen...')
