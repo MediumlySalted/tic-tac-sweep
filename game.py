@@ -213,7 +213,7 @@ class Game(tk.Tk):
             relwidth=.6,
         )
 
-        self.place_cells(minefield)
+        self.create_minefield(minefield)
 
     def load_mp_menu(self):
         pass
@@ -246,13 +246,20 @@ class Game(tk.Tk):
     def go_profile_menu(self):
         pass
 
-    def place_cells(self, minefield):
+    def create_minefield(self, minefield_frame):
+        minefield = [[] for _ in range(9)]
         for i in range(9):
             for j in range(9):
                 bomb = False
                 if random.randrange(8) == 1: bomb = True
-                cell = Cell(minefield, bomb)
-                cell.cell_btn.place(relx=j/9, rely=i/9, relwidth=1/9, relheight=1/9)
+                cell = Cell(minefield_frame, bomb)
+                cell.cell_btn.place(
+                    relx=j/9,
+                    rely=i/9,
+                    relwidth=1/9,
+                    relheight=1/9
+                )
+                minefield[i].append(cell)
 
     def clear_menu(self):
         print('\nClearing screen...')
@@ -283,8 +290,6 @@ def main():
     load_font("assets/RuneScape-Bold-12.ttf")
     root = Game()
     root.mainloop()
-
-
 
 
 if __name__ == "__main__":

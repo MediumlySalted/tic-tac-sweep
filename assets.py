@@ -10,4 +10,5 @@ colors = {
     'purple btn': Color(280, 35, 85),
     'red x': Color(0, 100, 100),
     'cell': Color(0, 0, 80),
+    'white': Color(0, 0, 90)
 }
