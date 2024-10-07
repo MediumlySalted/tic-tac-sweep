@@ -20,10 +20,12 @@ class Cell:
         self.cell_btn.bind('<Button-3>', self.flag)
 
     def sweep(self, left_click):
-        if self.is_bomb: self.end_game()
-        num_surrounding_cells = self.num_surrounding_cells()
-        if num_surrounding_cells > 0: self.cell_btn.configure(text=str(num_surrounding_cells))
-        self.cell_btn.configure(background=colors['white'])
+        if self.is_bomb:
+            self.cell_btn.configure(background=colors['red x'])
+        else:
+            num_surrounding_cells = self.num_surrounding_cells()
+            if num_surrounding_cells > 0: self.cell_btn.configure(text=str(num_surrounding_cells))
+            self.cell_btn.configure(background=colors['white'])
 
     def flag(self, right_click):
         pass

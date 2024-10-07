@@ -48,14 +48,10 @@ class Game(tk.Tk):
             width=1024,
         )
 
-        self.load_all_widgets()
+        self.current_menu = self.main_menu
         self.go_main_menu()
 
     # Functions for building widgets
-    def load_all_widgets(self):
-        self.load_main_menu()
-        self.load_sp_menu()
-
     def load_main_menu(self):
         '''
         Function to load all widgets relating to the main menu screen. 
@@ -77,7 +73,7 @@ class Game(tk.Tk):
             fg=colors['yellow txt'],
             background=colors["background"],
         )
-        title_text.place(x=960/2, y=128/2, anchor='center')
+        title_text.place(relx=.5, rely=.1, anchor='center')
 
         # Button Widgets
         single_player_btn = tk.Button(
@@ -226,14 +222,18 @@ class Game(tk.Tk):
 
     # Functions for displaying menu frames
     def go_main_menu(self):
-        self.clear_menu()
+        self.clear_menu(self.current_menu)
+        self.current_menu = self.main_menu
         print("\nDisplaying main menu...")
+        self.load_main_menu()
         self.main_menu.pack()
         print("Done!")
 
     def play_sp(self):
-        self.clear_menu()
+        self.clear_menu(self.current_menu)
+        self.current_menu = self.sp_menu
         print("\nDisplaying Single Player Menu...")
+        self.load_sp_menu()
         self.sp_menu.pack()
         print("Done!")
 
@@ -261,10 +261,11 @@ class Game(tk.Tk):
                 )
                 minefield[i].append(cell)
 
-    def clear_menu(self):
-        print('\nClearing screen...')
-        for child in self.winfo_children():
-            child.pack_forget()
+    def clear_menu(self, menu):
+        print('\nClearing widgets...')
+        for child in menu.winfo_children():
+            child.destroy()
+        menu.pack_forget()
         print("Done!")
 
     def quit(self):
