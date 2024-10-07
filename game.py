@@ -1,18 +1,12 @@
 import tkinter as tk
+import random
+import settings
+import assets
+from cell import Cell
 from ctypes import windll, byref, create_unicode_buffer
-from color import Color
 
-GAME_FONT = "RuneScape Bold 12"
-colors = {
-    'background': Color(20, 10, 40),
-    'yellow txt': Color(50, 100, 85),
-    'green btn': Color(95, 45, 80),
-    'red btn': Color(10, 50, 90),
-    'yellow btn': Color(55, 60, 85),
-    'purple btn': Color(280, 35, 85),
-    'red x': Color(0, 100, 100),
-    'cell': Color(0, 0, 80),
-}
+game_font = assets.game_font
+colors = assets.colors
 
 class Game(tk.Tk):
     def __init__(self):
@@ -56,7 +50,7 @@ class Game(tk.Tk):
 
         self.load_all_widgets()
         self.go_main_menu()
-    
+
     # Functions for building widgets
     def load_all_widgets(self):
         self.load_main_menu()
@@ -78,7 +72,7 @@ class Game(tk.Tk):
         title_text = tk.Label(
             self.main_menu,
             text="Tic-Tac-Sweep",
-            font=(GAME_FONT, 52),
+            font=(game_font, 52),
             justify='center',
             fg=colors['yellow txt'],
             background=colors["background"],
@@ -89,7 +83,7 @@ class Game(tk.Tk):
         single_player_btn = tk.Button(
             self.main_menu,
             text="Single Player",
-            font=(GAME_FONT, 32),
+            font=(game_font, 32),
             fg=colors["background"].dark(),
             activeforeground=colors["background"].dark(),
             background=colors['green btn'],
@@ -108,7 +102,7 @@ class Game(tk.Tk):
         multiplayer_btn = tk.Button(
             self.main_menu,
             text="Multi Player",
-            font=(GAME_FONT, 32),
+            font=(game_font, 32),
             fg=colors["background"].dark(),
             activeforeground=colors["background"].dark(),
             background=colors['red btn'],
@@ -127,7 +121,7 @@ class Game(tk.Tk):
         how_to_play_btn = tk.Button(
             self.main_menu,
             text="How to Play",
-            font=(GAME_FONT, 32),
+            font=(game_font, 32),
             fg=colors["background"].dark(),
             activeforeground=colors["background"].dark(),
             background=colors['yellow btn'],
@@ -146,7 +140,7 @@ class Game(tk.Tk):
         profile_btn = tk.Button(
             self.main_menu,
             text="Profile",
-            font=(GAME_FONT, 32),
+            font=(game_font, 32),
             fg=colors["background"].dark(),
             activeforeground=colors["background"].dark(),
             background=colors['purple btn'],
@@ -176,7 +170,7 @@ class Game(tk.Tk):
         title_text = tk.Label(
             information_bar,
             text="Single Player",
-            font=(GAME_FONT, 32),
+            font=(game_font, 32),
             justify='center',
             fg=colors['yellow txt'],
             background=colors["background"].dark(),
@@ -255,21 +249,17 @@ class Game(tk.Tk):
     def place_cells(self, minefield):
         for i in range(9):
             for j in range(9):
-                cell = tk.Button(
-                    minefield,
-                    background=colors['cell'],
-                    activebackground=colors['cell'].dark(),
-                    borderwidth=1,
-                    relief='ridge'
-                )
-                cell.place(relx=j/9, rely=i/9, relwidth=1/9, relheight=1/9)
+                bomb = False
+                if random.randrange(8) == 1: bomb = True
+                cell = Cell(minefield, bomb)
+                cell.cell_btn.place(relx=j/9, rely=i/9, relwidth=1/9, relheight=1/9)
 
     def clear_menu(self):
         print('\nClearing screen...')
         for child in self.winfo_children():
             child.pack_forget()
         print("Done!")
-    
+
     def quit(self):
         print("\nExiting Game...")
         self.destroy()
@@ -293,6 +283,8 @@ def main():
     load_font("assets/RuneScape-Bold-12.ttf")
     root = Game()
     root.mainloop()
+
+
 
 
 if __name__ == "__main__":
