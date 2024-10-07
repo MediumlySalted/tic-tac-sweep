@@ -1,9 +1,10 @@
 import tkinter as tk
-import random
+from ctypes import windll, byref, create_unicode_buffer
+import time
+from cell import Cell
 import settings
 import assets
-from cell import Cell
-from ctypes import windll, byref, create_unicode_buffer
+import random
 
 game_font = assets.game_font
 colors = assets.colors
@@ -157,14 +158,20 @@ class Game(tk.Tk):
         Loads all single player widgets.
         Contains: Information bar
         '''
-        information_bar = tk.Frame(
+        top_bar = tk.Frame(
             self.sp_menu,
             bg=colors['background'].dark()
         )
-        information_bar.place(x=0, y=0, relheight=.1, relwidth=1)
+        top_bar.place(relx=0, rely=0, relwidth=1, relheight=.1)
+
+        side_bar = tk.Frame(
+            self.sp_menu,
+            background=colors['background'].dark()
+        )
+        side_bar.place(relx=.05, rely=.15, relwidth=.25, relheight=.8)
 
         title_text = tk.Label(
-            information_bar,
+            top_bar,
             text="Single Player",
             font=(game_font, 32),
             justify='center',
@@ -175,7 +182,7 @@ class Game(tk.Tk):
 
         self.back_icon = tk.PhotoImage(file='assets/left.png')
         back_button = tk.Button(
-            information_bar,
+            top_bar,
             image=self.back_icon,
             background=colors['background'].dark(),
             activebackground=colors['background'].dark(),
@@ -183,11 +190,11 @@ class Game(tk.Tk):
             compound="center",
             command=self.go_main_menu
         )
-        back_button.place(relx=.01, rely=0.2, relheight=.6, relwidth=.05)
+        back_button.place(relx=.01, rely=0.2, relwidth=.05, relheight=.6)
 
         self.quit_icon = tk.PhotoImage(file='assets/quit.png')
         quit_button = tk.Button(
-            information_bar,
+            top_bar,
             image=self.quit_icon,
             background=colors['background'].dark(),
             activebackground=colors['background'].dark(),
@@ -195,20 +202,16 @@ class Game(tk.Tk):
             compound="center",
             command=self.quit
         )
-        quit_button.place(relx=.99, rely=0.2, relheight=.6, relwidth=.05, anchor='ne')
+        quit_button.place(relx=.99, rely=0.2, relwidth=.05, relheight=.6, anchor='ne')
 
         minefield = tk.Frame(
             self.sp_menu,
             bg=colors['background'].dark(.6),
             borderwidth=5
         )
-        minefield.place(
-            relx=.35,
-            rely=.15,
-            relheight=.8,
-            relwidth=.6,
-        )
+        minefield.place(relx=.35, rely=.15, relwidth=.6, relheight=.8)
 
+        
         self.create_minefield(minefield)
 
     def load_mp_menu(self):
