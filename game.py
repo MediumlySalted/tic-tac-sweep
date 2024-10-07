@@ -1,16 +1,12 @@
 import tkinter as tk
+import random
+import settings
+import assets
+from cell import Cell
 from ctypes import windll, byref, create_unicode_buffer
-from color import Color
 
-GAME_FONT = "RuneScape Bold 12"
-colors = {
-    'background': Color(20, 10, 40),
-    'yellow txt': Color(50, 100, 85),
-    'green btn': Color(95, 45, 80),
-    'red btn': Color(10, 50, 90),
-    'yellow btn': Color(55, 60, 85),
-    'purple btn': Color(280, 35, 85)
-}
+game_font = assets.game_font
+colors = assets.colors
 
 class Game(tk.Tk):
     def __init__(self):
@@ -54,7 +50,7 @@ class Game(tk.Tk):
 
         self.load_all_widgets()
         self.go_main_menu()
-    
+
     # Functions for building widgets
     def load_all_widgets(self):
         self.load_main_menu()
@@ -76,7 +72,7 @@ class Game(tk.Tk):
         title_text = tk.Label(
             self.main_menu,
             text="Tic-Tac-Sweep",
-            font=(GAME_FONT, 52),
+            font=(game_font, 52),
             justify='center',
             fg=colors['yellow txt'],
             background=colors["background"],
@@ -87,7 +83,7 @@ class Game(tk.Tk):
         single_player_btn = tk.Button(
             self.main_menu,
             text="Single Player",
-            font=(GAME_FONT, 32),
+            font=(game_font, 32),
             fg=colors["background"].dark(),
             activeforeground=colors["background"].dark(),
             background=colors['green btn'],
@@ -106,7 +102,7 @@ class Game(tk.Tk):
         multiplayer_btn = tk.Button(
             self.main_menu,
             text="Multi Player",
-            font=(GAME_FONT, 32),
+            font=(game_font, 32),
             fg=colors["background"].dark(),
             activeforeground=colors["background"].dark(),
             background=colors['red btn'],
@@ -125,7 +121,7 @@ class Game(tk.Tk):
         how_to_play_btn = tk.Button(
             self.main_menu,
             text="How to Play",
-            font=(GAME_FONT, 32),
+            font=(game_font, 32),
             fg=colors["background"].dark(),
             activeforeground=colors["background"].dark(),
             background=colors['yellow btn'],
@@ -144,7 +140,7 @@ class Game(tk.Tk):
         profile_btn = tk.Button(
             self.main_menu,
             text="Profile",
-            font=(GAME_FONT, 32),
+            font=(game_font, 32),
             fg=colors["background"].dark(),
             activeforeground=colors["background"].dark(),
             background=colors['purple btn'],
@@ -170,6 +166,17 @@ class Game(tk.Tk):
             bg=colors['background'].dark()
         )
         information_bar.place(x=0, y=0, relheight=.1, relwidth=1)
+
+        title_text = tk.Label(
+            information_bar,
+            text="Single Player",
+            font=(game_font, 32),
+            justify='center',
+            fg=colors['yellow txt'],
+            background=colors["background"].dark(),
+        )
+        title_text.place(relx=.5, rely=.5, anchor='center')
+
         self.back_icon = tk.PhotoImage(file='assets/left.png')
         back_button = tk.Button(
             information_bar,
@@ -194,6 +201,19 @@ class Game(tk.Tk):
         )
         quit_button.place(relx=.99, rely=0.2, relheight=.6, relwidth=.05, anchor='ne')
 
+        minefield = tk.Frame(
+            self.sp_menu,
+            bg=colors['background'].dark(.6),
+            borderwidth=5
+        )
+        minefield.place(
+            relx=.35,
+            rely=.15,
+            relheight=.8,
+            relwidth=.6,
+        )
+
+        self.create_minefield(minefield)
 
     def load_mp_menu(self):
         pass
@@ -226,12 +246,27 @@ class Game(tk.Tk):
     def go_profile_menu(self):
         pass
 
+    def create_minefield(self, minefield_frame):
+        minefield = [[] for _ in range(9)]
+        for i in range(9):
+            for j in range(9):
+                bomb = False
+                if random.randrange(8) == 1: bomb = True
+                cell = Cell(minefield_frame, bomb)
+                cell.cell_btn.place(
+                    relx=j/9,
+                    rely=i/9,
+                    relwidth=1/9,
+                    relheight=1/9
+                )
+                minefield[i].append(cell)
+
     def clear_menu(self):
         print('\nClearing screen...')
         for child in self.winfo_children():
             child.pack_forget()
         print("Done!")
-    
+
     def quit(self):
         print("\nExiting Game...")
         self.destroy()

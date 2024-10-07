@@ -12,13 +12,11 @@ class Color:
         return self.hexify(rgb)
 
     def hexify(self, val):
-        r = str(hex(int(val[0] * 255)))[2:]
-        g = str(hex(int(val[1] * 255)))[2:]
-        b = str(hex(int(val[2] * 255)))[2:]
-        if len(r) < 2: r = '0' + r
-        if len(g) < 2: g = '0' + g
-        if len(b) < 2: b = '0' + b
-        hex_value = '#' + r + g + b
+        hex_value = '#'
+        for i in range(3):
+            x = str(hex(int(val[i] * 255)))[2:]
+            if len(x) < 2: x = '0' + x
+            hex_value += x
         return hex_value
 
     def dark(self, dark_value=0.8):
