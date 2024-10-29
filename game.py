@@ -1,7 +1,8 @@
+
 import tkinter as tk
 from ctypes import windll, byref, create_unicode_buffer
 import time
-from cell import Cell
+from cell import Cell, Minefield
 import settings
 import assets
 import random
@@ -204,15 +205,14 @@ class Game(tk.Tk):
         )
         quit_button.place(relx=.99, rely=0.2, relwidth=.05, relheight=.6, anchor='ne')
 
-        minefield = tk.Frame(
+        minefield_frame = tk.Frame(
             self.sp_menu,
             bg=colors['background'].dark(.6),
             borderwidth=5
         )
-        minefield.place(relx=.35, rely=.15, relwidth=.6, relheight=.8)
+        minefield_frame.place(relx=.35, rely=.15, relwidth=.6, relheight=.8)
 
-        
-        self.create_minefield(minefield)
+        sp_game = Minefield(minefield_frame).create_minefield()
 
     def load_mp_menu(self):
         pass
@@ -248,21 +248,6 @@ class Game(tk.Tk):
 
     def go_profile_menu(self):
         pass
-
-    def create_minefield(self, minefield_frame):
-        minefield = [[] for _ in range(9)]
-        for i in range(9):
-            for j in range(9):
-                bomb = False
-                if random.randrange(8) == 1: bomb = True
-                cell = Cell(minefield_frame, bomb)
-                cell.cell_btn.place(
-                    relx=j/9,
-                    rely=i/9,
-                    relwidth=1/9,
-                    relheight=1/9
-                )
-                minefield[i].append(cell)
 
     def clear_menu(self, menu):
         print('\nClearing widgets...')
