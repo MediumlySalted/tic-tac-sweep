@@ -78,5 +78,4 @@ class Cell:
                     if self.minefield.cells[check_y][check_x].is_bomb:
                         num += 1
 
-        print(num)
         return num
