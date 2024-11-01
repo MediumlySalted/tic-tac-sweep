@@ -1,11 +1,7 @@
-
 import tkinter as tk
 from ctypes import windll, byref, create_unicode_buffer
-from cell import Minefield
-import assets
-
-GAME_FONT = assets.game_font
-COLORS = assets.colors
+from minesweeper import Minefield
+from assets import GAME_FONT, COLORS
 
 class Game(tk.Tk):
     def __init__(self): 
@@ -138,7 +134,6 @@ class SPMenu(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         self.controller = controller
-        self.active = False
 
         self.configure(bg=COLORS['background'])
 
@@ -238,25 +233,24 @@ class SPMenu(tk.Frame):
 
     def start_game(self):
         self.start_btn.configure(state='disabled')
-        self.active = True
         self.time = 0
-        Minefield(self.minefield_frame).create_minefield()
+        self.game = Minefield(self.minefield_frame)
+        self.game.create_minefield()
         self.controller.after(100, self.update_timer)
-    
+
     def end_game(self):
         print("\nEnding Game...")
         self.start_btn.configure(state='active')
-        self.active = False
+        self.game.game_over = True
         self.reset_timer()
         for widget in self.minefield_frame.winfo_children():
             widget.destroy()
         print("Done!")
-    
+
     def update_timer(self):
         self.time += 1
         self.timer.configure(text=f'{self.time // 600:02}:{(self.time // 10) % 60:02}.{self.time % 10}')
-        if self.active:
-            self.controller.after(100, self.update_timer)
+        if not self.game.game_over: self.controller.after(100, self.update_timer)
 
     def reset_timer(self):
         self.controller.after(100, lambda: self.timer.configure(text=f'00:00.0'))
