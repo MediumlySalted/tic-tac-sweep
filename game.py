@@ -30,6 +30,7 @@ class Game(tk.Tk):
 
     # Displays the current page
     def show_page(self, page_class):
+        print(f"\nDisplaying {page_class.__name__} page")
         page = self.pages[page_class]
         page.tkraise()
     
@@ -136,6 +137,8 @@ class SPMenu(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
+        self.controller = controller
+
         self.configure(bg=COLORS['background'])
 
         # TOP BAR ELEMENTS
@@ -163,9 +166,9 @@ class SPMenu(tk.Frame):
             activebackground=COLORS['background'].dark(),
             borderwidth=0,
             compound="center",
-            command=lambda : controller.show_page(MainMenu)
+            command=self.back
         )
-        back_button.place(relx=.01, rely=0.2, relwidth=.05, relheight=.6)
+        back_button.place(relx=.01, rely=0.5, anchor='w')
 
         self.quit_icon = tk.PhotoImage(file='assets/quit.png')
         quit_button = tk.Button(
@@ -175,9 +178,9 @@ class SPMenu(tk.Frame):
             activebackground=COLORS['background'].dark(),
             borderwidth=0,
             compound="center",
-            command=controller.quit
+            command=self.controller.quit
         )
-        quit_button.place(relx=.99, rely=0.2, relwidth=.05, relheight=.6, anchor='ne')
+        quit_button.place(relx=.99, rely=0.5, anchor='e')
 
         side_bar = tk.Frame(
             self,
@@ -195,7 +198,7 @@ class SPMenu(tk.Frame):
             compound="center",
             command=self.start_game
         )
-        start_btn.place(relx=.05, rely=.025)
+        start_btn.place(relx=.95, rely=.025, anchor='ne')
 
         self.minefield_frame = tk.Frame(
             self,
@@ -204,13 +207,16 @@ class SPMenu(tk.Frame):
         )
         self.minefield_frame.place(relx=.35, rely=.15, relwidth=.6, relheight=.8)
 
-        self.start_game()
-
     def start_game(self):
         Minefield(self.minefield_frame).create_minefield()
+
+    def back(self):
+        print("\nDeleting minesweeper board")
+        for widget in self.minefield_frame.winfo_children():
+            widget.destroy()
         
-    def quit():
-        pass
+        print("Done!")
+        self.controller.show_page(MainMenu)
 
 
 class MPMenu(tk.Frame):
