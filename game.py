@@ -138,18 +138,19 @@ class SPMenu(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         self.controller = controller
+        self.active = False
 
         self.configure(bg=COLORS['background'])
 
         # TOP BAR ELEMENTS
-        top_bar = tk.Frame(
+        self.top_bar = tk.Frame(
             self,
             bg=COLORS['background'].dark()
         )
-        top_bar.place(relx=0, rely=0, relwidth=1, relheight=.1)
+        self.top_bar.place(relx=0, rely=0, relwidth=1, relheight=.1)
 
         title_text = tk.Label(
-            top_bar,
+            self.top_bar,
             text="Single Player",
             font=(GAME_FONT, 32),
             justify='center',
@@ -159,8 +160,8 @@ class SPMenu(tk.Frame):
         title_text.place(relx=.5, rely=.5, anchor='center')
 
         self.back_icon = tk.PhotoImage(file='assets/left.png')
-        back_button = tk.Button(
-            top_bar,
+        self.back_btn = tk.Button(
+            self.top_bar,
             image=self.back_icon,
             background=COLORS['background'].dark(),
             activebackground=COLORS['background'].dark(),
@@ -168,11 +169,11 @@ class SPMenu(tk.Frame):
             compound="center",
             command=self.back
         )
-        back_button.place(relx=.01, rely=0.5, anchor='w')
+        self.back_btn.place(relx=.025, rely=0.5, anchor='w')
 
         self.quit_icon = tk.PhotoImage(file='assets/quit.png')
-        quit_button = tk.Button(
-            top_bar,
+        self.quit_btn = tk.Button(
+            self.top_bar,
             image=self.quit_icon,
             background=COLORS['background'].dark(),
             activebackground=COLORS['background'].dark(),
@@ -180,17 +181,17 @@ class SPMenu(tk.Frame):
             compound="center",
             command=self.controller.quit
         )
-        quit_button.place(relx=.99, rely=0.5, anchor='e')
+        self.quit_btn.place(relx=.975, rely=0.5, anchor='e')
 
-        side_bar = tk.Frame(
+        self.side_bar = tk.Frame(
             self,
             background=COLORS['background'].dark()
         )
-        side_bar.place(relx=.05, rely=.15, relwidth=.25, relheight=.8)
+        self.side_bar.place(relx=.05, rely=.15, relwidth=.25, relheight=.8)
 
         self.start_icon = tk.PhotoImage(file='assets/start.png')
-        start_btn = tk.Button(
-            side_bar,
+        self.start_btn = tk.Button(
+            self.side_bar,
             image=self.start_icon,
             background=COLORS['background'].dark(),
             activebackground=COLORS['background'].dark(),
@@ -198,8 +199,36 @@ class SPMenu(tk.Frame):
             compound="center",
             command=self.start_game
         )
-        start_btn.place(relx=.95, rely=.025, anchor='ne')
+        self.start_btn.place(relx=.95, rely=.05, anchor='ne')
 
+        self.stop_icon = tk.PhotoImage(file='assets/stop.png')
+        self.stop_btn = tk.Button(
+            self.side_bar,
+            image=self.stop_icon,
+            background=COLORS['background'].dark(),
+            activebackground=COLORS['background'].dark(),
+            borderwidth=0,
+            compound="center",
+            command=self.end_game
+        )
+        self.stop_btn.place(relx=.025, rely=.05, anchor='nw')
+
+        self.timer_frame = tk.Frame(
+            self.side_bar,
+            bg=COLORS['background'],
+        )
+        self.timer_frame.place(relx=.5, rely=.025, relwidth=.65, relheight=.1, anchor='n')
+
+        self.timer = tk.Label(
+            self.timer_frame,
+            text='00:00.0',
+            font=(GAME_FONT, 32),
+            justify='center',
+            fg=COLORS['yellow txt'],
+            background=COLORS["background"],
+        )
+        self.timer.place(relx=.05, rely=.5, anchor='w')
+        
         self.minefield_frame = tk.Frame(
             self,
             bg=COLORS['background'].dark(.6),
@@ -208,14 +237,32 @@ class SPMenu(tk.Frame):
         self.minefield_frame.place(relx=.35, rely=.15, relwidth=.6, relheight=.8)
 
     def start_game(self):
+        self.start_btn.configure(state='disabled')
+        self.active = True
+        self.time = 0
         Minefield(self.minefield_frame).create_minefield()
-
-    def back(self):
-        print("\nDeleting minesweeper board")
+        self.controller.after(100, self.update_timer)
+    
+    def end_game(self):
+        print("\nEnding Game...")
+        self.start_btn.configure(state='active')
+        self.active = False
+        self.reset_timer()
         for widget in self.minefield_frame.winfo_children():
             widget.destroy()
-        
         print("Done!")
+    
+    def update_timer(self):
+        self.time += 1
+        self.timer.configure(text=f'{self.time // 600:02}:{(self.time // 10) % 60:02}.{self.time % 10}')
+        if self.active:
+            self.controller.after(100, self.update_timer)
+
+    def reset_timer(self):
+        self.controller.after(100, lambda: self.timer.configure(text=f'00:00.0'))
+
+    def back(self):
+        self.end_game()
         self.controller.show_page(MainMenu)
 
 
