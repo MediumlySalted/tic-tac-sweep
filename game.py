@@ -185,6 +185,7 @@ class SPMenu(tk.Frame):
         self.side_bar.place(relx=.05, rely=.15, relwidth=.25, relheight=.8)
 
         self.start_icon = tk.PhotoImage(file='assets/start.png')
+        self.reset_icon = tk.PhotoImage(file='assets/reset.png')
         self.start_btn = tk.Button(
             self.side_bar,
             image=self.start_icon,
@@ -194,7 +195,7 @@ class SPMenu(tk.Frame):
             compound="center",
             command=self.start_game
         )
-        self.start_btn.place(relx=.95, rely=.05, anchor='ne')
+        self.start_btn.place(relx=.97, rely=.05, anchor='ne')
 
         self.stop_icon = tk.PhotoImage(file='assets/stop.png')
         self.stop_btn = tk.Button(
@@ -204,7 +205,7 @@ class SPMenu(tk.Frame):
             activebackground=COLORS['background'].dark(),
             borderwidth=0,
             compound="center",
-            command=self.end_game
+            command=self.stop_game
         )
         self.stop_btn.place(relx=.025, rely=.05, anchor='nw')
 
@@ -223,7 +224,7 @@ class SPMenu(tk.Frame):
             background=COLORS["background"],
         )
         self.timer.place(relx=.05, rely=.5, anchor='w')
-        
+
         self.minefield_frame = tk.Frame(
             self,
             bg=COLORS['background'].dark(.6),
@@ -232,31 +233,35 @@ class SPMenu(tk.Frame):
         self.minefield_frame.place(relx=.35, rely=.15, relwidth=.6, relheight=.8)
 
     def start_game(self):
-        self.start_btn.configure(state='disabled')
+        self.start_btn.configure(image=self.reset_icon)
+        self.start_btn.configure(command=self.reset_game)
         self.time = 0
         self.game = Minefield(self.minefield_frame)
         self.game.create_minefield()
+        # Wait 100ms before updating the timer
         self.controller.after(100, self.update_timer)
 
-    def end_game(self):
-        print("\nEnding Game...")
-        self.start_btn.configure(state='active')
+    def stop_game(self):
+        self.start_btn.configure(image=self.start_icon)
+        self.start_btn.configure(command=self.start_game)
         self.game.game_over = True
-        self.reset_timer()
+        self.timer.configure(text=f'00:00.0')
         for widget in self.minefield_frame.winfo_children():
             widget.destroy()
-        print("Done!")
 
     def update_timer(self):
-        self.time += 1
-        self.timer.configure(text=f'{self.time // 600:02}:{(self.time // 10) % 60:02}.{self.time % 10}')
-        if not self.game.game_over: self.controller.after(100, self.update_timer)
+        if not self.game.game_over: # Game not over
+            self.time += 1
+            self.timer.configure(text=f'{self.time // 600:02}:{(self.time // 10) % 60:02}.{self.time % 10}')
+            self.controller.after(100, self.update_timer)
+        elif self.game.game_over == 'Win': self.game_won()
 
-    def reset_timer(self):
-        self.controller.after(100, lambda: self.timer.configure(text=f'00:00.0'))
+    def reset_game(self):
+        self.stop_game()
+        self.start_game()
 
     def back(self):
-        self.end_game()
+        self.stop_game()
         self.controller.show_page(MainMenu)
 
 
