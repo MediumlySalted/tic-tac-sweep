@@ -178,6 +178,7 @@ class SPMenu(tk.Frame):
         )
         self.quit_btn.place(relx=.975, rely=0.5, anchor='e')
 
+        # SIDE BAR ELEMENTS
         self.side_bar = tk.Frame(
             self,
             background=COLORS['background'].dark()
@@ -209,22 +210,42 @@ class SPMenu(tk.Frame):
         )
         self.stop_btn.place(relx=.025, rely=.05, anchor='nw')
 
-        self.timer_frame = tk.Frame(
+        self.info_box = tk.Frame(
             self.side_bar,
             bg=COLORS['background'],
         )
-        self.timer_frame.place(relx=.5, rely=.025, relwidth=.65, relheight=.1, anchor='n')
+        self.info_box.place(relx=.5, rely=.025, relwidth=.65, relheight=.2, anchor='n')
 
         self.timer = tk.Label(
-            self.timer_frame,
+            self.info_box,
             text='00:00.0',
             font=(GAME_FONT, 32),
             justify='center',
             fg=COLORS['yellow txt'],
             background=COLORS["background"],
         )
-        self.timer.place(relx=.05, rely=.5, anchor='w')
+        self.timer.place(relx=.05, rely=.3, anchor='w')
 
+        self.bomb_icon = tk.PhotoImage(file='assets/bomb.png')
+        self.bomb_label = tk.Label(
+            self.info_box,
+            image=self.bomb_icon,
+            background=COLORS['background'],
+            borderwidth=0,
+            compound="center",
+        )
+        self.bomb_label.place(relx=.25, rely=.7, anchor='w')
+        self.bomb_count = tk.Label(
+            self.info_box,
+            text='0',
+            font=(GAME_FONT, 32),
+            justify='center',
+            fg=COLORS['yellow txt'],
+            background=COLORS["background"],
+        )
+        self.bomb_count.place(relx=.75, rely=.7, anchor='e')
+
+        # GAME ELEMENTS
         self.minefield_frame = tk.Frame(
             self,
             bg=COLORS['background'].dark(.6),
@@ -239,7 +260,7 @@ class SPMenu(tk.Frame):
         self.game = Minefield(self.minefield_frame)
         self.game.create_minefield()
         # Wait 100ms before updating the timer
-        self.controller.after(100, self.update_timer)
+        self.controller.after(100, self.update_info)
 
     def stop_game(self):
         self.start_btn.configure(image=self.start_icon)
@@ -249,12 +270,12 @@ class SPMenu(tk.Frame):
         for widget in self.minefield_frame.winfo_children():
             widget.destroy()
 
-    def update_timer(self):
+    def update_info(self):
         if not self.game.game_over: # Game not over
+            self.bomb_count.configure(text=self.game.total_bombs - self.game.total_flags)
             self.time += 1
             self.timer.configure(text=f'{self.time // 600:02}:{(self.time // 10) % 60:02}.{self.time % 10}')
-            self.controller.after(100, self.update_timer)
-        elif self.game.game_over == 'Win': self.game_won()
+            self.controller.after(100, self.update_info)
 
     def reset_game(self):
         self.stop_game()
