@@ -7,6 +7,7 @@ class TicTacToe:
         self.width = width
         self.height = height
 
+        self.game_state = True
         self.game_board = [[] for _ in range(3)]
         self.turn = True
 
@@ -38,7 +39,18 @@ class TicTacToe:
                 self.game_board[i].append(btn)
         
     def check_for_win(self):
-        pass
+        # Check rows & cols
+        for i in range(3):
+            row_check = self.game_board[i][0].btn['text']
+            if row_check and all(row_check == self.game_board[i][j].btn['text'] for j in range(1, 3)): return row_check
+            col_check = self.game_board[0][i].btn['text']
+            if col_check and all(col_check == self.game_board[j][i].btn['text'] for j in range(1, 3)): return col_check
+
+        # Check diagonals
+        nw_to_se_check = self.game_board[0][0].btn['text']
+        if nw_to_se_check and all(nw_to_se_check == self.game_board[i][i].btn['text'] for i in range(1, 3)): return nw_to_se_check
+        ne_to_sw_check = self.game_board[0][-1].btn['text']
+        if ne_to_sw_check and all(ne_to_sw_check == self.game_board[i][-i].btn['text'] for i in range(1, 3)): return ne_to_sw_check
 
 
 class TTTButton:
@@ -60,4 +72,4 @@ class TTTButton:
         if turn: self.btn.configure(text='X')
         if not turn: self.btn.configure(text='O')
         self.tictactoe.turn = not turn
-        self.tictactoe.check_for_win()
+        self.tictactoe.game_state = self.tictactoe.check_for_win()
