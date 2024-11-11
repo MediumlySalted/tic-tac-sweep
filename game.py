@@ -216,22 +216,22 @@ class SPMenu(tk.Frame):
         self.start_btn.configure(command=self.reset_game)
         self.time = 0
         self.game = Minefield(self.minefield_frame)
-        self.game.create_minefield()
         # Wait 100ms before updating the timer
         self.controller.after(100, self.update_info)
 
     def stop_game(self):
         self.start_btn.configure(image=self.start_icon)
         self.start_btn.configure(command=self.start_game)
-        if self.game: self.game.game_over = True
+        if self.game: self.game.game_over = 'Stopped'
         self.timer.configure(text=f'00:00.0')
         self.bomb_count.configure(text='0')
         for widget in self.minefield_frame.winfo_children():
             widget.destroy()
 
     def update_info(self):
-        if not self.game.game_over: # Game not over
-            self.bomb_count.configure(text=self.game.total_bombs - self.game.total_flags)
+        if self.game.game_over == 'Stopped': return
+        self.bomb_count.configure(text=self.game.total_bombs - self.game.total_flags)
+        if not self.game.game_over: # Game still going
             self.time += 1
             self.timer.configure(text=f'{self.time // 600:02}:{(self.time // 10) % 60:02}.{self.time % 10}')
             self.controller.after(100, self.update_info)
