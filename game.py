@@ -1,6 +1,7 @@
 import tkinter as tk
 from ctypes import windll, byref, create_unicode_buffer
 from minesweeper import Minefield
+from tictactoe import TicTacToe
 from assets import GAME_FONT, COLORS
 
 class Game(tk.Tk):
@@ -254,6 +255,14 @@ class MPMenu(tk.Frame):
         TopBar(self, "Multiplayer").place(relx=0, rely=0, relwidth=1, relheight=.1)
         self.game = None
 
+        # GAME ELEMENTS
+        width = 1024 * .45
+        height = 768 * .6
+        self.tictactoe_frame = tk.Frame(self, bg=COLORS['background'].dark(.6),)
+        self.tictactoe_frame.place(relx=.025, rely=.15, width=width, height=height)
+
+        TicTacToe(self.tictactoe_frame, width, height)
+        
     def back(self):
         self.controller.show_page(MainMenu)
 
