@@ -11,7 +11,11 @@ class Minefield:
         self.total_bombs = int(self.size**2 * self.bomb_percent)
         self.total_flags = 0
         self.cells_left = self.size**2
+    
+        self.create_minefield()
 
+        
+    def create_minefield(self):
         # 2d array of minefield
         self.cells = [[] for _ in range(self.size)]
         bombs = random.sample(range(self.size**2), self.total_bombs)
