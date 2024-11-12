@@ -42,6 +42,7 @@ class Minesweeper:
             self.game_state = 'Win'
             self.reveal()
             if self.mp:
+                print('Win')
                 self.ttt_button.mark('Win')
 
 
@@ -68,6 +69,7 @@ class Cell:
         self.flag_icon = tk.PhotoImage(file='assets/flag.png')
 
     def sweep(self, rec=False, event=None):
+        if self.is_flagged and not self.is_bomb: return
         if not self.is_swept: self.minefield.cells_left -= 1
         self.is_swept = True
         if self.is_bomb:
@@ -77,10 +79,8 @@ class Cell:
             if self.minefield.game_state == 'Lose': self.cell_btn.configure(background=COLORS['red x'], image=self.bomb_icon)
             self.minefield.reveal()
         else:
-            if self.is_flagged: return
             self.cell_btn.configure(background=COLORS['white'])
             surrounding_bombs, surrounding_flags = self.surrounding_cells()
-
             # Sweep surrounding cells
             if surrounding_bombs == 0: rec = True
             if surrounding_bombs - surrounding_flags == 0 and rec:
@@ -90,8 +90,8 @@ class Cell:
                         if not cell.is_swept and not cell.is_flagged:
                             cell.sweep()
 
-            self.minefield.check_for_win()
             if surrounding_bombs > 0: self.cell_btn.configure(text=str(surrounding_bombs), font=(GAME_FONT, 24))
+            self.minefield.check_for_win()
 
     def flag(self, event=None):
         if self.is_swept: return
@@ -181,13 +181,15 @@ class TTTButton:
             borderwidth=0,
             command=self.start_ms_game
         )
-        self.ms_game = Minesweeper(self.tictactoe.game_frame.master.minefield_frame, mp=True, ttt_button=self)
+        self.ms_game = None
 
     def start_ms_game(self):
         if self.btn['text']: return
         self.tictactoe.game_state = 'Playing'
-        for widget in self.ms_game.game_frame.winfo_children():
-            widget.destroy()
+        if self.ms_game:
+            for widget in self.ms_game.game_frame.winfo_children():
+                widget.destroy()
+        self.ms_game = Minesweeper(self.tictactoe.game_frame.master.minefield_frame, mp=True, ttt_button=self)
         self.ms_game.create_minefield()
 
     def mark(self, state):
