@@ -276,10 +276,6 @@ class MPMenu(tk.Frame):
         self.tictactoe_frame.place(relx=.025, rely=.15, width=self.relwidth, height=self.relheight)
         self.ttt_game = TicTacToe(self.tictactoe_frame, self.relwidth, self.relheight)
 
-    def clear_minefield(self):
-        for widget in self.minefield_frame.winfo_children():
-            widget.destroy()
-    
     def back(self):
         self.controller.show_page(MainMenu)
 

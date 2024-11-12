@@ -42,7 +42,6 @@ class Minesweeper:
             self.game_state = 'Win'
             self.reveal()
             if self.mp:
-                print('Win')
                 self.ttt_button.mark('Win')
 
 
@@ -172,6 +171,7 @@ class TicTacToe:
 class TTTButton:
     def __init__(self, tictactoe):
         self.tictactoe = tictactoe
+        self.marked = False
         self.btn = tk.Button(
             self.tictactoe.game_frame,
             text=None,
@@ -184,19 +184,23 @@ class TTTButton:
         self.ms_game = None
 
     def start_ms_game(self):
-        if self.btn['text']: return
-        self.tictactoe.game_state = 'Playing'
-        if self.ms_game:
-            for widget in self.ms_game.game_frame.winfo_children():
-                widget.destroy()
+        if self.marked: return
+        if self.tictactoe.turn: self.btn.configure(text='X', fg=COLORS['yellow txt'])
+        if not self.tictactoe.turn: self.btn.configure(text='O', fg=COLORS['yellow txt'])
+        for widget in self.tictactoe.game_frame.master.minefield_frame.winfo_children():
+            widget.destroy()
         self.ms_game = Minesweeper(self.tictactoe.game_frame.master.minefield_frame, mp=True, ttt_button=self)
         self.ms_game.create_minefield()
 
     def mark(self, state):
         if state == 'Win':
+            self.marked = True
             turn = self.tictactoe.turn
-            if turn: self.btn.configure(text='X')
-            if not turn: self.btn.configure(text='O')
+            if turn: self.btn.configure(text='X', fg=COLORS['green'])
+            if not turn: self.btn.configure(text='O', fg=COLORS['red x'])
             self.tictactoe.turn = not turn
             self.tictactoe.game_state = self.tictactoe.check_for_win()
-        if self.ms_game.game_state == 'Lose': self.tictactoe.game_state = None
+        if self.ms_game.game_state == 'Lose':
+            self.tictactoe.game_state = None
+            if self.tictactoe.turn: self.btn.configure(text=None)
+            if not self.tictactoe.turn: self.btn.configure(text=None)
