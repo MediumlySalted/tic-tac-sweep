@@ -1,7 +1,6 @@
 import tkinter as tk
 from ctypes import windll, byref, create_unicode_buffer
-from minesweeper import Minefield
-from tictactoe import TicTacToe
+from tictacsweep import Minesweeper, TicTacToe
 from assets import GAME_FONT, COLORS
 
 class Game(tk.Tk):
@@ -137,7 +136,9 @@ class SPMenu(tk.Frame):
         self.top_bar = TopBar(self, "Single Player").place(relx=0, rely=0, relwidth=1, relheight=.1)
         self.game = None
 
-        # SIDE BAR ELEMENTS
+        self.create_side_bar_elements()
+
+    def create_side_bar_elements(self):
         self.side_bar = tk.Frame(
             self,
             background=COLORS['background'].dark()
@@ -169,6 +170,9 @@ class SPMenu(tk.Frame):
         )
         self.stop_btn.place(relx=.025, rely=.05, anchor='nw')
 
+        self.create_info_box_elements()
+
+    def create_info_box_elements(self):
         self.info_box = tk.Frame(
             self.side_bar,
             bg=COLORS['background'],
@@ -216,23 +220,24 @@ class SPMenu(tk.Frame):
         self.start_btn.configure(image=self.reset_icon)
         self.start_btn.configure(command=self.reset_game)
         self.time = 0
-        self.game = Minefield(self.minefield_frame)
+        self.game = Minesweeper(self.minefield_frame)
+        self.game.create_minefield()
         # Wait 100ms before updating the timer
         self.controller.after(100, self.update_info)
 
     def stop_game(self):
         self.start_btn.configure(image=self.start_icon)
         self.start_btn.configure(command=self.start_game)
-        if self.game: self.game.game_over = 'Stopped'
+        if self.game: self.game.game_state = 'Stopped'
         self.timer.configure(text=f'00:00.0')
         self.bomb_count.configure(text='0')
         for widget in self.minefield_frame.winfo_children():
             widget.destroy()
 
     def update_info(self):
-        if self.game.game_over == 'Stopped': return
+        if self.game.game_state == 'Stopped': return
         self.bomb_count.configure(text=self.game.total_bombs - self.game.total_flags)
-        if not self.game.game_over: # Game still going
+        if self.game.game_state not in {'Win', 'Lose'}: # Game still going
             self.time += 1
             self.timer.configure(text=f'{self.time // 600:02}:{(self.time // 10) % 60:02}.{self.time % 10}')
             self.controller.after(100, self.update_info)
@@ -253,16 +258,28 @@ class MPMenu(tk.Frame):
         self.controller = controller
         self.configure(bg=COLORS['background'])
         TopBar(self, "Multiplayer").place(relx=0, rely=0, relwidth=1, relheight=.1)
-        self.game = None
+        self.ttt_game = None
+        self.ms_game = None
+        self.relwidth = 1024 * .45
+        self.relheight = 768 * .6
 
-        # GAME ELEMENTS
-        width = 1024 * .45
-        height = 768 * .6
+        # MINESWEEPER ELEMENTS
+        self.minefield_frame = tk.Frame(
+            self,
+            bg=COLORS['background'].dark(.6),
+            borderwidth=5
+        )
+        self.minefield_frame.place(relx=.525, rely=.15, width=self.relwidth, height=self.relheight)
+
+        # TICTACTOE ELEMENTS
         self.tictactoe_frame = tk.Frame(self, bg=COLORS['background'].dark(.6),)
-        self.tictactoe_frame.place(relx=.025, rely=.15, width=width, height=height)
+        self.tictactoe_frame.place(relx=.025, rely=.15, width=self.relwidth, height=self.relheight)
+        self.ttt_game = TicTacToe(self.tictactoe_frame, self.relwidth, self.relheight)
 
-        TicTacToe(self.tictactoe_frame, width, height)
-        
+    def clear_minefield(self):
+        for widget in self.minefield_frame.winfo_children():
+            widget.destroy()
+    
     def back(self):
         self.controller.show_page(MainMenu)
 
