@@ -45,7 +45,7 @@ def advertise_server(port):
     udp_socket.close()
 
 def start_server(port):
-    host = '127.0.0.1'
+    host = ''
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
     server_socket.listen(1)
@@ -75,12 +75,12 @@ def connect_server(host, port):
 
     client_socket.close()
 
-def main(port=27612):
+def main(port=7212):
     server_ip = find_server(port)
 
     if server_ip:
         print(f"Connecting to server at {server_ip}:{port}")
-        time.sleep(1000)
+        time.sleep(1)
         connect_server(server_ip, port)
     else:
         print("No server found. Starting as the host...")
