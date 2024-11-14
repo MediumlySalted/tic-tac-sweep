@@ -13,6 +13,8 @@ class Minesweeper:
         self.total_bombs = int(self.size**2 * self.bomb_percent)
         self.total_flags = 0
         self.cells_left = self.size**2
+        self.bomb_icon = tk.PhotoImage(file='assets/bomb.png')
+        self.flag_icon = tk.PhotoImage(file='assets/flag.png')
 
     def create_minefield(self):
         self.game_state = True
@@ -64,39 +66,38 @@ class Cell:
         )
         self.cell_btn.bind('<Button-1>', self.sweep)
         self.cell_btn.bind('<Button-3>', self.flag)
-        self.bomb_icon = tk.PhotoImage(file='assets/bomb.png')
-        self.flag_icon = tk.PhotoImage(file='assets/flag.png')
 
     def sweep(self, rec=False, event=None):
-        if self.is_flagged and not self.is_bomb: return
+        if self.is_flagged and self.minefield.game_state != 'Lose': return
         if not self.is_swept: self.minefield.cells_left -= 1
         self.is_swept = True
         if self.is_bomb:
             if self.minefield.game_state == 'Win':
-                self.cell_btn.configure(background=COLORS['green'], image=self.bomb_icon)
+                self.cell_btn.configure(background=COLORS['green'], image=self.minefield.bomb_icon)
             else: self.minefield.game_state = 'Lose'
-            if self.minefield.game_state == 'Lose': self.cell_btn.configure(background=COLORS['red x'], image=self.bomb_icon)
+            if self.minefield.game_state == 'Lose': self.cell_btn.configure(background=COLORS['red x'], image=self.minefield.bomb_icon)
             self.minefield.reveal()
         else:
             self.cell_btn.configure(background=COLORS['white'])
             surrounding_bombs, surrounding_flags = self.surrounding_cells()
             # Sweep surrounding cells
             if surrounding_bombs == 0: rec = True
-            if surrounding_bombs - surrounding_flags == 0 and rec:
+            if surrounding_bombs - surrounding_flags <= 0 and rec:
                 for i in range(max(0, self.y_pos-1), min(self.y_pos+2, self.minefield.size)):
                     for j in range(max(0, self.x_pos-1), min(self.x_pos+2, self.minefield.size)):
                         cell = self.minefield.cells[i][j]
                         if not cell.is_swept and not cell.is_flagged:
                             cell.sweep()
 
-            if surrounding_bombs > 0: self.cell_btn.configure(text=str(surrounding_bombs), font=(GAME_FONT, 24))
+            if surrounding_bombs > 0 and not self.is_flagged: self.cell_btn.configure(text=str(surrounding_bombs), font=(GAME_FONT, 24))
+            if self.is_flagged: self.cell_btn.configure(text='X', font=(GAME_FONT, 32), fg=COLORS['red x'], image='')
             self.minefield.check_for_win()
 
     def flag(self, event=None):
         if self.is_swept: return
         if not self.is_flagged:
             self.minefield.total_flags += 1
-            self.cell_btn.configure(image=self.flag_icon)
+            self.cell_btn.configure(image=self.minefield.flag_icon)
         else:
             self.minefield.total_flags -= 1
             self.cell_btn.configure(image='')
