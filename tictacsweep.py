@@ -17,7 +17,7 @@ class Minesweeper:
         self.flag_icon = tk.PhotoImage(file='assets/flag.png')
 
     def create_minefield(self):
-        self.game_state = True
+        self.game_state = 'Playing'
         # 2d array of minefield
         self.cells = [[] for _ in range(self.size)]
         bombs = random.sample(range(self.size**2), self.total_bombs)
@@ -68,13 +68,16 @@ class Cell:
         self.cell_btn.bind('<Button-3>', self.flag)
 
     def sweep(self, rec=False, event=None):
-        if self.is_flagged and self.minefield.game_state != 'Lose': return
+        if self.is_flagged and self.minefield.game_state == 'Playing': return
         if not self.is_swept: self.minefield.cells_left -= 1
         self.is_swept = True
         if self.is_bomb:
             if self.minefield.game_state == 'Win':
                 self.cell_btn.configure(background=COLORS['green'], image=self.minefield.bomb_icon)
-            else: self.minefield.game_state = 'Lose'
+            else:
+                self.minefield.game_state = 'Lose'
+                if self.minefield.mp:
+                    self.minefield.ttt_button.mark('Lose')
             if self.minefield.game_state == 'Lose': self.cell_btn.configure(background=COLORS['red x'], image=self.minefield.bomb_icon)
             self.minefield.reveal()
         else:
@@ -185,7 +188,9 @@ class TTTButton:
         self.ms_game = None
 
     def start_ms_game(self):
-        if self.marked: return
+        if self.marked or self.tictactoe.game_state: return
+        self.marked = 'Playing'
+        self.tictactoe.game_state = 'Playing'
         if self.tictactoe.turn: self.btn.configure(text='X', fg=COLORS['yellow txt'])
         if not self.tictactoe.turn: self.btn.configure(text='O', fg=COLORS['yellow txt'])
         for widget in self.tictactoe.game_frame.master.minefield_frame.winfo_children():
@@ -194,7 +199,7 @@ class TTTButton:
         self.ms_game.create_minefield()
 
     def mark(self, state):
-        if state == 'Win':
+        if state == 'Win' and self.marked == 'Playing':
             self.marked = True
             turn = self.tictactoe.turn
             if turn: self.btn.configure(text='X', fg=COLORS['green'])
@@ -202,6 +207,6 @@ class TTTButton:
             self.tictactoe.turn = not turn
             self.tictactoe.game_state = self.tictactoe.check_for_win()
         if self.ms_game.game_state == 'Lose':
-            self.tictactoe.game_state = None
-            if self.tictactoe.turn: self.btn.configure(text=None)
-            if not self.tictactoe.turn: self.btn.configure(text=None)
+            self.marked = False
+            self.tictactoe.game_state = False
+            self.btn.configure(text='')
