@@ -9,7 +9,7 @@ class Minesweeper:
         self.ttt_button = ttt_button
         self.game_state = False
         self.size = 8 # Recommended range [8, 16]
-        self.bomb_percent = .05 # Recommended range [0.10, 0.20]
+        self.bomb_percent = 0 # Recommended range [0.10, 0.20]
         self.total_bombs = int(self.size**2 * self.bomb_percent)
         self.total_flags = 0
         self.cells_left = self.size**2
@@ -157,7 +157,12 @@ class TicTacToe:
                 )
                 self.game_board[i].append(btn)
 
-    def check_for_win(self):
+    def check_game_state(self):
+        winner = self.check_winner()
+        if winner: return winner
+        return self.check_tie()
+
+    def check_winner(self):
         win_colors = {
             'X': COLORS['green'],
             'O': COLORS['orange'],
@@ -190,6 +195,17 @@ class TicTacToe:
         if nesw_check:
             for i in range(3): self.game_board[i][-i-1].btn.configure(fg=win_colors[nesw_check])
             return nesw_check
+
+    def check_tie(self):
+        for i in range(3):
+            for j in range(3):
+                if not self.game_board[i][j].btn['text']: return
+
+        for i in range(3):
+            for j in range(3):
+                self.game_board[i][j].btn.configure(fg=COLORS['yellow txt'].dark(.6))
+
+        return 'Tie'
 
 
 class TTTButton:
@@ -225,7 +241,7 @@ class TTTButton:
             if turn: self.btn.configure(text='X', fg=COLORS['yellow txt'].dark(.9))
             if not turn: self.btn.configure(text='O', fg=COLORS['red x'])
             self.tictactoe.turn = not turn
-            self.tictactoe.game_state = self.tictactoe.check_for_win()
+            self.tictactoe.game_state = self.tictactoe.check_game_state()
         if self.ms_game.game_state == 'Lose':
             self.marked = False
             self.tictactoe.game_state = False
