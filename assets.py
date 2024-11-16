@@ -8,8 +8,10 @@ COLORS = {
     'red btn': Color(10, 50, 85),
     'yellow btn': Color(55, 60, 85),
     'purple btn': Color(280, 35, 85),
-    'red x': Color(0, 100, 100),
+    'red x': Color(5, 90, 90),
     'cell': Color(0, 0, 80),
-    'green': Color(95, 75, 80),
-    'white': Color(0, 0, 90)
+    'green': Color(95, 85, 80),
+    'white': Color(0, 0, 90),
+    'gray': Color(200, 10, 55),
+    'orange': Color(25, 90, 90),
 }

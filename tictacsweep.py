@@ -8,8 +8,8 @@ class Minesweeper:
         self.mp = mp
         self.ttt_button = ttt_button
         self.game_state = False
-        self.size = 9 # Recommended range [8, 16]
-        self.bomb_percent = .12 # Recommended range [0.10, 0.20]
+        self.size = 8 # Recommended range [8, 16]
+        self.bomb_percent = .05 # Recommended range [0.10, 0.20]
         self.total_bombs = int(self.size**2 * self.bomb_percent)
         self.total_flags = 0
         self.cells_left = self.size**2
@@ -158,18 +158,38 @@ class TicTacToe:
                 self.game_board[i].append(btn)
 
     def check_for_win(self):
+        win_colors = {
+            'X': COLORS['green'],
+            'O': COLORS['orange'],
+        }
         # Check rows & cols
         for i in range(3):
+            # Check rows & change color on win
             row_check = self.game_board[i][0].btn['text']
-            if row_check and all(row_check == self.game_board[i][j].btn['text'] for j in range(1, 3)): return row_check
-            col_check = self.game_board[0][i].btn['text']
-            if col_check and all(col_check == self.game_board[j][i].btn['text'] for j in range(1, 3)): return col_check
+            if row_check and any(row_check != self.game_board[i][j].btn['text'] for j in range(1, 3)): row_check = None
+            if row_check:
+                for j in range(3): self.game_board[i][j].btn.configure(fg=win_colors[row_check])
+                return row_check
 
-        # Check diagonals
-        nw_to_se_check = self.game_board[0][0].btn['text']
-        if nw_to_se_check and all(nw_to_se_check == self.game_board[i][i].btn['text'] for i in range(1, 3)): return nw_to_se_check
-        ne_to_sw_check = self.game_board[0][-1].btn['text']
-        if ne_to_sw_check and all(ne_to_sw_check == self.game_board[i][-i].btn['text'] for i in range(1, 3)): return ne_to_sw_check
+            # Check cols & change color on win
+            col_check = self.game_board[0][i].btn['text']
+            if col_check and any(col_check != self.game_board[j][i].btn['text'] for j in range(1, 3)): col_check = None
+            if col_check:
+                for j in range(3): self.game_board[j][i].btn.configure(fg=win_colors[col_check])
+                return col_check
+
+        # Check diagonals & change color on win
+        nwse_check = self.game_board[0][0].btn['text']
+        if nwse_check and any(nwse_check != self.game_board[i][i].btn['text'] for i in range(1, 3)): nwse_check = None
+        if nwse_check:
+            for i in range(3): self.game_board[i][i].btn.configure(fg=win_colors[nwse_check])
+            return nwse_check
+
+        nesw_check = self.game_board[0][-1].btn['text']
+        if nesw_check and any(nesw_check != self.game_board[i][-i-1].btn['text'] for i in range(1, 3)): nesw_check = None
+        if nesw_check:
+            for i in range(3): self.game_board[i][-i-1].btn.configure(fg=win_colors[nesw_check])
+            return nesw_check
 
 
 class TTTButton:
@@ -191,8 +211,8 @@ class TTTButton:
         if self.marked or self.tictactoe.game_state: return
         self.marked = 'Playing'
         self.tictactoe.game_state = 'Playing'
-        if self.tictactoe.turn: self.btn.configure(text='X', fg=COLORS['yellow txt'])
-        if not self.tictactoe.turn: self.btn.configure(text='O', fg=COLORS['yellow txt'])
+        if self.tictactoe.turn: self.btn.configure(text='X', fg=COLORS['gray'])
+        if not self.tictactoe.turn: self.btn.configure(text='O', fg=COLORS['gray'].dark())
         for widget in self.tictactoe.game_frame.master.minefield_frame.winfo_children():
             widget.destroy()
         self.ms_game = Minesweeper(self.tictactoe.game_frame.master.minefield_frame, mp=True, ttt_button=self)
@@ -202,7 +222,7 @@ class TTTButton:
         if state == 'Win' and self.marked == 'Playing':
             self.marked = True
             turn = self.tictactoe.turn
-            if turn: self.btn.configure(text='X', fg=COLORS['green'])
+            if turn: self.btn.configure(text='X', fg=COLORS['yellow txt'].dark(.9))
             if not turn: self.btn.configure(text='O', fg=COLORS['red x'])
             self.tictactoe.turn = not turn
             self.tictactoe.game_state = self.tictactoe.check_for_win()
