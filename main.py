@@ -259,7 +259,9 @@ class MPMenu(tk.Frame):
 
         self.controller = controller
         self.configure(bg=COLORS['background'])
-        TopBar(self, "Multiplayer").place(relx=0, rely=0, relwidth=1, relheight=.1)
+        self.top_bar = TopBar(self, "Multiplayer")
+        self.top_bar.place(relx=0, rely=0, relwidth=1, relheight=.1)
+        self.top_bar.quit_btn.configure(command=self.quit)
         self.relwidth = 1024 * .45
         self.relheight = 768 * .6
         self.game = None
@@ -292,23 +294,39 @@ class MPMenu(tk.Frame):
     def start_game(self):
         self.game = TicTacToe(self.tictactoe_frame, self.relwidth, self.relheight)
         self.match = Match(self.game)
-        match_thread = threading.Thread(target=self.find_game)
+        self.stop_searching = threading.Event()
+        match_thread = threading.Thread(target=self.match.find_match, args=(self.stop_searching,))
         match_thread.start()
         self.wait_for_game()
 
-    def find_game(self):
-        self.match.find_match()
-
     def wait_for_game(self):
-        if not self.match.connection: self.controller.after(100, self.wait_for_game)
-        else: self.game_found()
-    
+        if self.match:
+            if not self.match.connection: self.controller.after(100, self.wait_for_game)
+            else: self.game_found()
+
     def game_found(self):
         self.game.draw_canvas()
         self.game.create_buttons()
+        self.game.match = self.match
 
     def back(self):
+        self.stop_searching.set()
+        if self.match: self.match.end()
+        self.clear_game()
         self.controller.show_page(MainMenu)
+
+    def quit(self):
+        self.stop_searching.set()
+        if self.match: self.match.end()
+        self.controller.quit()
+
+    def clear_game(self):
+        for widget in self.minefield_frame.winfo_children():
+            widget.destroy()
+        for widget in self.tictactoe_frame.winfo_children():
+            widget.destroy()
+        self.match = None
+        self.game = None
 
 
 class H2PMenu(tk.Frame):

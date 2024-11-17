@@ -10,17 +10,19 @@ class Match:
         self.port = port
         self.connection = None
 
-    def find_match(self):
+    def find_match(self, stop_searching):
         ip = None
-        while not ip:
-            ip = self.find_server()
+        while not ip and not stop_searching.is_set():
+            ip = self.find_server(stop_searching)
             if ip:
                 self.connect_server(ip, self.port)
             else:
-                ip = self.advertise_server()
-                if ip: self.start_server()
+                ip = self.advertise_server(stop_searching)
+                if ip:
+                    self.start_server()
+                    self.host = True
 
-    def find_server(self, timeout=1):
+    def find_server(self, stop_searching, timeout=1):
         # Set up the UDP socket for broadcasting
         timeout += round(random.uniform(0, 2), 3) # Randomizes timeout to prevent sync'd searches
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -33,7 +35,7 @@ class Match:
         print(f"\nSearching for servers on port [{self.port}]...")
 
         server_ip = None
-        while not server_ip:
+        while not server_ip and not stop_searching.is_set():
             try:
                 response, server_address = udp_socket.recvfrom(1024)
                 if response == b"hosting tic-tac-sweep":
@@ -47,7 +49,7 @@ class Match:
         udp_socket.close()
         return server_ip
 
-    def advertise_server(self, timeout=5):
+    def advertise_server(self, stop_searching, timeout=5):
         # Create a UDP socket to listen for discovery requests
         timeout += round(random.uniform(0, 2), 3) # Randomizes timeout to prevent sync'd searches
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -57,7 +59,7 @@ class Match:
         print(f"\nListening for clients on port {self.port}...")
 
         client_ip = None
-        while not client_ip:
+        while not client_ip and not stop_searching.is_set():
             try:
                 data, client_address = udp_socket.recvfrom(1024)
                 if data == b"looking for tic-tac-sweep":
@@ -74,16 +76,23 @@ class Match:
         return client_ip
 
     def recieve_messages(self):
+        print('Now receiving updates')
         self.connection.settimeout(1)
         while self.game.game_state not in {'Win', 'Lose', 'Tie'}:
             try:
                 message = self.connection.recv(1024).decode()
-                if message: self.game.update(message)
-            except socket.timeout:
-                continue
+                if message:
+                    print(f'Recieved: {message}')
+                    if message == 'QUIT':
+                        self.game.update(message)
+                        self.end()
+                        break
+                    else: self.game.update(message)
+            except socket.timeout: continue
+            except OSError: break
 
     def send_message(self, message):
-        message = message
+        print(f'Sending: {message}')
         self.connection.sendall(message.encode())
 
     def message_handler(self):
@@ -91,9 +100,6 @@ class Match:
 
         receive_thread.start()
         receive_thread.join()
-
-        self.connection.close()
-        print("Connection closed")
 
     def start_server(self):
         self.host = True
@@ -118,3 +124,14 @@ class Match:
 
         self.connection = client_socket
         self.message_handler()
+
+    def end(self):
+        if self.connection:
+            print('Ending connection.')
+            try:
+                self.send_message('QUIT')
+                self.connection.shutdown(socket.SHUT_RDWR)
+            except OSError: pass
+            finally:
+                self.connection.close()
+                print('Connection ended.')
