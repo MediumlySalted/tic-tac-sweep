@@ -173,6 +173,7 @@ class SPMenu(tk.Frame):
         self.stop_btn.place(relx=.025, rely=.05, anchor='nw')
 
         self.create_info_box_elements()
+        self.create_settings_box_elements()
 
     def create_info_box_elements(self):
         self.info_box = tk.Frame(
@@ -218,11 +219,27 @@ class SPMenu(tk.Frame):
         )
         self.minefield_frame.place(relx=.35, rely=.15, relwidth=.6, relheight=.8)
 
+    def create_settings_box_elements(self):
+        self.settings = Settings(
+            self.side_bar,
+            size=9,
+            size_range=(8, 16),
+            bomb_percent=0.12,
+            bomb_percent_range=(0.1, 0.2)
+        )
+        self.settings.place(relx=.5, rely=.2, relwidth=.65, relheight=.2, anchor='n')
+        self.settings.create_size_display()
+        self.settings.create_bomb_percent_display()
+
     def start_game(self):
         self.start_btn.configure(image=self.reset_icon)
         self.start_btn.configure(command=self.reset_game)
         self.time = 0
-        self.game = Minesweeper(self.minefield_frame)
+        self.game = Minesweeper(
+            self.minefield_frame,
+            size=self.settings.size,
+            bomb_percent=self.settings.bomb_percent
+        )
         self.game.create_minefield()
         # Wait 100ms before updating the timer
         self.controller.after(100, self.update_info)
@@ -310,14 +327,16 @@ class MPMenu(tk.Frame):
         self.game.match = self.match
 
     def back(self):
-        self.stop_searching.set()
-        if self.match: self.match.end()
+        if self.match:
+            self.stop_searching.set()
+            self.match.end()
         self.clear_game()
         self.controller.show_page(MainMenu)
 
     def quit(self):
-        self.stop_searching.set()
-        if self.match: self.match.end()
+        if self.match:
+            self.stop_searching.set()
+            self.match.end()
         self.controller.quit()
 
     def clear_game(self):
@@ -374,6 +393,97 @@ class TopBar(tk.Frame):
             command=self.parent.controller.quit
         )
         self.quit_btn.place(relx=.975, rely=0.5, anchor='e')
+
+
+class Settings(tk.Frame):
+    def __init__(self, parent, size, bomb_percent, size_range, bomb_percent_range):
+        tk.Frame.__init__(self, parent, background=COLORS['background'])
+        self.size = size
+        self.bomb_percent = bomb_percent
+        self.size_range = size_range
+        self.bomb_percent_range = bomb_percent_range
+        self.up_icon = tk.PhotoImage(file='assets/up.png')
+        self.down_icon = tk.PhotoImage(file='assets/down.png')
+
+    def create_size_display(self):
+        self.size_display = tk.Label(
+            self,
+            text=f'{self.size:02}',
+            font=(GAME_FONT, 32),
+            justify='center',
+            fg=COLORS['yellow txt'],
+            background=COLORS["background"],
+        )
+        self.size_display.place(relx=.05, rely=.25, anchor='w')
+        self.size_up_btn = tk.Button(
+            self,
+            image=self.up_icon,
+            background=COLORS['background'],
+            borderwidth=0,
+            compound="center",
+            command=self.size_up
+        )
+        self.size_up_btn.place(relx=.95, rely=.25, anchor='se')
+        self.size_down_btn = tk.Button(
+            self,
+            image=self.down_icon,
+            background=COLORS['background'],
+            borderwidth=0,
+            compound="center",
+            command=self.size_down
+        )
+        self.size_down_btn.place(relx=.95, rely=.25, anchor='ne')
+
+    def create_bomb_percent_display(self):
+        self.bomb_percent_display = tk.Label(
+            self,
+            text=f'{self.bomb_percent * 100:.0f}%',
+            font=(GAME_FONT, 32),
+            justify='center',
+            fg=COLORS['yellow txt'],
+            background=COLORS["background"],
+        )
+        self.bomb_percent_display.place(relx=.05, rely=.75, anchor='w')
+        self.bomb_percent_up_btn = tk.Button(
+            self,
+            image=self.up_icon,
+            background=COLORS['background'],
+            borderwidth=0,
+            compound="center",
+            command=self.bomb_percent_up
+        )
+        self.bomb_percent_up_btn.place(relx=.95, rely=.75, anchor='se')
+        self.bomb_percent_down_btn = tk.Button(
+            self,
+            image=self.down_icon,
+            background=COLORS['background'],
+            borderwidth=0,
+            compound="center",
+            command=self.bomb_percent_down
+        )
+        self.bomb_percent_down_btn.place(relx=.95, rely=.75, anchor='ne')
+
+    def size_up(self):
+        self.size += 1
+        if self.size > self.size_range[1]: self.size -= self.size_range[1] - self.size_range[0] + 1
+        self.size_display['text'] = self.size
+
+    def size_down(self):
+        self.size -= 1
+        if self.size < self.size_range[0]: self.size += self.size_range[1] - self.size_range[0] + 1
+        self.size_display['text'] = self.size
+
+    def bomb_percent_up(self):
+        self.bomb_percent += 0.01
+        if self.bomb_percent > self.bomb_percent_range[1]:
+            self.bomb_percent -= self.bomb_percent_range[1] - self.bomb_percent_range[0] + 0.01
+        self.bomb_percent_display['text'] = f'{self.bomb_percent * 100:.0f}%'
+
+    def bomb_percent_down(self):
+        self.bomb_percent -= 0.01
+        if self.bomb_percent < self.bomb_percent_range[0]:
+            self.bomb_percent += self.bomb_percent_range[1] - self.bomb_percent_range[0] + 0.01
+        self.bomb_percent_display['text'] = f'{self.bomb_percent * 100:.0f}%'
 
 
 def load_font(font_path):

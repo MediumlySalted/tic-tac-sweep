@@ -4,16 +4,16 @@ import random
 import tkinter as tk
 
 class Minesweeper:
-    def __init__(self, game_frame, mp=False, ttt_button=None):
+    def __init__(self, game_frame, size=9, bomb_percent=0.12, mp=False, ttt_button=None):
         self.game_frame = game_frame
+        self.size = size # Recommended SP, MP Range [8, 16], []
+        self.bomb_percent = bomb_percent # Recommended SP, MP Range [0.10, 0.20], []
         self.mp = mp
         self.ttt_button = ttt_button
         self.game_state = False
-        self.size = 9 # Recommended range [8, 16]
-        self.bomb_percent = .12 # Recommended range [0.10, 0.20]
-        self.total_bombs = int(self.size**2 * self.bomb_percent)
         self.total_flags = 0
         self.cells_left = self.size**2
+        self.total_bombs = int(self.size**2 * self.bomb_percent)
         self.bomb_icon = tk.PhotoImage(file='assets/bomb.png')
         self.flag_icon = tk.PhotoImage(file='assets/flag.png')
 
