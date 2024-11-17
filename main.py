@@ -1,7 +1,9 @@
 import tkinter as tk
+import threading
 from ctypes import windll, byref, create_unicode_buffer
 from tictacsweep import Minesweeper, TicTacToe
 from assets import GAME_FONT, COLORS
+from matchmaker import Match
 
 class Game(tk.Tk):
     def __init__(self): 
@@ -258,10 +260,10 @@ class MPMenu(tk.Frame):
         self.controller = controller
         self.configure(bg=COLORS['background'])
         TopBar(self, "Multiplayer").place(relx=0, rely=0, relwidth=1, relheight=.1)
-        self.ttt_game = None
-        self.ms_game = None
         self.relwidth = 1024 * .45
         self.relheight = 768 * .6
+        self.game = None
+        self.match = None
 
         # MINESWEEPER ELEMENTS
         self.minefield_frame = tk.Frame(
@@ -274,7 +276,36 @@ class MPMenu(tk.Frame):
         # TICTACTOE ELEMENTS
         self.tictactoe_frame = tk.Frame(self, bg=COLORS['background'].dark(.6),)
         self.tictactoe_frame.place(relx=.025, rely=.15, width=self.relwidth, height=self.relheight)
-        self.ttt_game = TicTacToe(self.tictactoe_frame, self.relwidth, self.relheight)
+
+        self.start_icon = tk.PhotoImage(file='assets/start.png')
+        self.start_btn = tk.Button(
+            self,
+            image=self.start_icon,
+            background=COLORS['background'].dark(),
+            activebackground=COLORS['background'].dark(),
+            borderwidth=0,
+            compound="center",
+            command=self.start_game
+        )
+        self.start_btn.place(relx=.5, rely=.975, anchor='s')
+
+    def start_game(self):
+        self.game = TicTacToe(self.tictactoe_frame, self.relwidth, self.relheight)
+        self.match = Match(self.game)
+        match_thread = threading.Thread(target=self.find_game)
+        match_thread.start()
+        self.wait_for_game()
+
+    def find_game(self):
+        self.match.find_match()
+
+    def wait_for_game(self):
+        if not self.match.connection: self.controller.after(100, self.wait_for_game)
+        else: self.game_found()
+    
+    def game_found(self):
+        self.game.draw_canvas()
+        self.game.create_buttons()
 
     def back(self):
         self.controller.show_page(MainMenu)

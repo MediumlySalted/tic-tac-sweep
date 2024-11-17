@@ -1,4 +1,5 @@
 from assets import GAME_FONT, COLORS
+from matchmaker import Match
 import random
 import tkinter as tk
 
@@ -130,9 +131,6 @@ class TicTacToe:
         self.game_board = [[] for _ in range(3)]
         self.turn = True
 
-        self.draw_canvas()
-        self.create_buttons()
-
     def draw_canvas(self):
         game_canvas = tk.Canvas(
             self.game_frame,
@@ -206,6 +204,9 @@ class TicTacToe:
                 self.game_board[i][j].btn.configure(fg=COLORS['yellow txt'].dark(.6))
 
         return 'Tie'
+
+    def update(self, message):
+        print(message)
 
 
 class TTTButton:
