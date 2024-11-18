@@ -13,11 +13,11 @@ class Game(tk.Tk):
         self.title('Tic-Tac-Sweep')
         self.config(background=COLORS['background'])
 
-        # Main container for all page frames
+        # Main container frame for all menus
         game_frame = tk.Frame(self, width=1024, height=768, background=COLORS['background'])
         game_frame.place(x=0, y=0, width=1024, height=786) 
 
-        # Populates pages with the different page classes after loading them
+        # Populates pages with the different menu classes after loading them
         self.pages = {}
         for F in (MainMenu, SPMenu, MPMenu, H2PMenu):
             frame = F(game_frame, self)
@@ -26,7 +26,6 @@ class Game(tk.Tk):
 
         self.show_page(MainMenu)
 
-    # Displays the current page
     def show_page(self, page_class):
         page = self.pages[page_class]
         page.tkraise()

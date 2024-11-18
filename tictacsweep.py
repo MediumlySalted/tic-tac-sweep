@@ -75,6 +75,10 @@ class Cell:
         self.cell_btn.bind('<Button-3>', self.flag)
 
     def sweep(self, recursive=False, event=None):
+        '''
+        Function is called from reveal() so it has lots of checks for 'Playing', 'Win', and 'Lose' states
+        Recusivley called when the surround bombs are 0
+        '''
         if self.is_flagged and self.minefield.game_state == 'Playing': return
         if not self.is_swept: self.minefield.cells_left -= 1
         self.is_swept = True
@@ -120,6 +124,9 @@ class Cell:
         self.minefield.check_for_win()
 
     def surrounding_cells(self):
+        '''
+        Returns the number of surrounding bombs and flags as a tuple
+        '''
         bombs = 0
         flags = 0
         for i in range(max(0, self.y_pos-1), min(self.y_pos+2, self.minefield.size)):
@@ -249,10 +256,9 @@ class TTTButton:
     def start_ms_game(self):
         if self.marked or self.tictactoe.game_state: return
         self.marked = 'Playing'
-        self.tictactoe.game_state = 'Playing'
+        self.tictactoe.game_state = 'Playing' # Used for blocking the creation of new ms games
         self.btn.configure(text='*', fg=COLORS['gray'])
-        for widget in self.tictactoe.game_frame.master.minefield_frame.winfo_children():
-            widget.destroy()
+        if self.ms_game: self.ms_game.clear_game()
         self.ms_game = Minesweeper(
             self.tictactoe.game_frame.master.minefield_frame,
             mp=True,
@@ -269,11 +275,13 @@ class TTTButton:
         }
         if state == 'Win':
             if turn == 'X': self.tictactoe.match.send_message(self.pos)
+            # Clears minefield when opponenet wins the position being played
             elif self.marked == 'Playing': self.ms_game.clear_game()
             self.marked = True
             self.btn.configure(text=turn, fg=mark_colors[turn])
             self.tictactoe.game_state = self.tictactoe.check_game_state()
         if state == 'Lose':
+            # Resets button state
             self.marked = False
             self.tictactoe.game_state = False
             self.btn.configure(text='')
