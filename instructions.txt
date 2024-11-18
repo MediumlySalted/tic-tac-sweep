@@ -1,0 +1,5 @@
+Muliplayer gameplay works as a non-turn-based tic-tac-toe game.
+
+To "win" a square, you must first choose one, then win a minesweeper game.
+
+You can practice minesweeper in the Single Player menu.

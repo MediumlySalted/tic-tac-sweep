@@ -1,6 +1,5 @@
 import tkinter as tk
 import threading
-from json import dumps, loads
 from ctypes import windll, byref, create_unicode_buffer
 from tictacsweep import Minesweeper, TicTacToe
 from assets import GAME_FONT, COLORS
@@ -20,7 +19,7 @@ class Game(tk.Tk):
 
         # Populates pages with the different page classes after loading them
         self.pages = {}
-        for F in (MainMenu, SPMenu, MPMenu):
+        for F in (MainMenu, SPMenu, MPMenu, H2PMenu):
             frame = F(game_frame, self)
             self.pages[F] = frame 
             frame.place(x=0, y=0, width=1024, height=786) 
@@ -100,6 +99,7 @@ class MainMenu(tk.Frame):
             activebackground=COLORS['yellow btn'].dark(),
             borderwidth=0,
             compound="center",
+            command=lambda : controller.show_page(H2PMenu)
         )
         how_to_play_btn.place(
             relx=.135,
@@ -108,7 +108,7 @@ class MainMenu(tk.Frame):
             relheight=.1
         )
 
-        profile_btn = tk.Button(
+        quit_btn = tk.Button(
             self,
             text="Quit",
             font=(GAME_FONT, 32),
@@ -120,7 +120,7 @@ class MainMenu(tk.Frame):
             compound="center",
             command=controller.quit
         )
-        profile_btn.place(
+        quit_btn.place(
             relx=.515,
             rely=.465,
             relwidth=.35,
@@ -323,27 +323,6 @@ class MPMenu(tk.Frame):
         self.info_bar = tk.Frame(self, bg=COLORS['background'].dark())
         self.info_bar.place(relx=.75, rely=.125, relwidth=.45, relheight=.15, anchor='n')
 
-        self.info_box = tk.Frame(
-            self.info_bar,
-            bg=COLORS['background'],
-        )
-        self.bomb_icon = tk.PhotoImage(file='assets/bomb.png')
-        self.bomb_label = tk.Label(
-            self.info_box,
-            image=self.bomb_icon,
-            background=COLORS['background'],
-            borderwidth=0,
-            compound="center",
-        )
-        self.bomb_count = tk.Label(
-            self.info_box,
-            text='0',
-            font=(GAME_FONT, 32),
-            justify='center',
-            fg=COLORS['yellow txt'],
-            background=COLORS["background"],
-        )
-
     def create_info_widgets(self):
         self.info_box = tk.Frame(
             self.info_bar,
@@ -446,15 +425,35 @@ class MPMenu(tk.Frame):
         self.match = None
         for widget in self.minefield_frame.winfo_children():
             widget.destroy()
-        for widget in self.info_box.winfo_children():
-            widget.destroy()
         for widget in self.info_bar.winfo_children():
+            for subwidget in widget.winfo_children():
+                subwidget.destroy()
             widget.destroy()
 
 
 class H2PMenu(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+    def __init__(self, parent, controller): 
+        tk.Frame.__init__(self, parent, bg=COLORS['background'])
+
+        self.controller = controller
+        self.h2p_text = open('instructions.txt', 'r')
+        self.top_bar = TopBar(self, "Single Player")
+        self.top_bar.place(relx=0, rely=0, relwidth=1, relheight=.1)
+        self.text_frame = tk.Frame(self, bg=COLORS['background'])
+        self.text_frame.place(relx=0, rely=.1, relwidth=1, relheight=.9)
+        self.text = tk.Label(
+            self.text_frame,
+            text=self.h2p_text.read(),
+            wraplength=1024*.9,
+            font=(GAME_FONT, 42),
+            justify='left',
+            fg=COLORS['yellow txt'],
+            background=COLORS["background"],
+        )
+        self.text.place(relx=0.5, rely=0, relwidth=.9, relheight=.9, anchor='n')
+
+    def back(self):
+        self.controller.show_page(MainMenu)
 
 
 class TopBar(tk.Frame):

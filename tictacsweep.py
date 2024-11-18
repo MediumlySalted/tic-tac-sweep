@@ -85,7 +85,7 @@ class Cell:
                 self.minefield.game_state = 'Lose'
                 if self.minefield.mp:
                     self.minefield.ttt_button.mark('Lose')
-            if self.minefield.game_state == 'Lose': self.cell_btn.configure(background=COLORS['red x'], image=self.minefield.bomb_icon)
+            if self.minefield.game_state == 'Lose': self.cell_btn.configure(background=COLORS['red'], image=self.minefield.bomb_icon)
             self.minefield.reveal()
         else:
             self.cell_btn.configure(background=COLORS['white'])
@@ -102,7 +102,7 @@ class Cell:
             if surrounding_bombs > 0 and not self.is_flagged:
                 self.cell_btn.configure(text=str(surrounding_bombs), font=(GAME_FONT, 24))
             if self.is_flagged:
-                self.cell_btn.configure(text='X', font=(GAME_FONT, 32), fg=COLORS['red x'], image='')
+                self.cell_btn.configure(text='X', font=(GAME_FONT, 32), fg=COLORS['red'], image='')
             if self.minefield.game_state == 'Playing': self.minefield.check_for_win()
 
     def flag(self, event=None):
@@ -250,7 +250,7 @@ class TTTButton:
         if self.marked or self.tictactoe.game_state: return
         self.marked = 'Playing'
         self.tictactoe.game_state = 'Playing'
-        self.btn.configure(text='X', fg=COLORS['gray'])
+        self.btn.configure(text='*', fg=COLORS['gray'])
         for widget in self.tictactoe.game_frame.master.minefield_frame.winfo_children():
             widget.destroy()
         self.ms_game = Minesweeper(
@@ -265,7 +265,7 @@ class TTTButton:
     def mark(self, state, turn='X'):
         mark_colors = {
             'X': COLORS['yellow txt'].dark(.9),
-            'O': COLORS['red x'],
+            'O': COLORS['red'],
         }
         if state == 'Win':
             if turn == 'X': self.tictactoe.match.send_message(self.pos)
