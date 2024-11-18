@@ -344,6 +344,32 @@ class MPMenu(tk.Frame):
             background=COLORS["background"],
         )
 
+    def create_info_widgets(self):
+        self.info_box = tk.Frame(
+            self.info_bar,
+            bg=COLORS['background'],
+        )
+        self.info_box.place(relx=.025, rely=.5, relwidth=.3, relheight=.8, anchor='w')
+
+        self.bomb_icon = tk.PhotoImage(file='assets/bomb.png')
+        self.bomb_label = tk.Label(
+            self.info_box,
+            image=self.bomb_icon,
+            background=COLORS['background'],
+            borderwidth=0,
+            compound="center",
+        )
+        self.bomb_label.place(relx=.5, rely=.5, anchor='e')
+        self.bomb_count = tk.Label(
+            self.info_box,
+            text='0',
+            font=(GAME_FONT, 32),
+            justify='center',
+            fg=COLORS['yellow txt'],
+            background=COLORS["background"],
+        )
+        self.bomb_count.place(relx=.5, rely=.5, anchor='w')
+
     def create_minesweeper_elements(self):
         self.minefield_frame = tk.Frame(
             self,
@@ -394,9 +420,7 @@ class MPMenu(tk.Frame):
         self.searching_display.destroy()
         self.game.draw_canvas()
         self.game.create_buttons()
-        self.info_box.place(relx=.025, rely=.5, relwidth=.3, relheight=.9, anchor='w')
-        self.bomb_label.place(relx=.5, rely=.5, anchor='e')
-        self.bomb_count.place(relx=.5, rely=.5, anchor='w')
+        self.create_info_widgets()
 
     def end_game(self):
         self.start_btn['state'] = 'normal'
@@ -404,7 +428,10 @@ class MPMenu(tk.Frame):
             print("Search ended.")
             self.stop_searching.set()
             self.match.end()
-        self.clear_game()
+
+        for widget in self.tictactoe_frame.winfo_children():
+            widget.destroy()
+        if self.game: self.clear_game()
 
     def back(self):
         self.end_game()
@@ -419,7 +446,7 @@ class MPMenu(tk.Frame):
         self.match = None
         for widget in self.minefield_frame.winfo_children():
             widget.destroy()
-        for widget in self.tictactoe_frame.winfo_children():
+        for widget in self.info_box.winfo_children():
             widget.destroy()
         for widget in self.info_bar.winfo_children():
             widget.destroy()

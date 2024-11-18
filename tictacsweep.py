@@ -170,7 +170,9 @@ class TicTacToe:
 
     def check_game_state(self):
         winner = self.check_winner()
-        if winner: return winner
+        if winner:
+            self.match.send_message('WIN')
+            return winner
         return self.check_tie()
 
     def check_winner(self):
@@ -220,6 +222,9 @@ class TicTacToe:
 
     def update(self, message):
         if message == 'QUIT': self.game_frame.master.clear_game()
+        elif message == 'WIN':
+            self.game_state = 'Lose'
+            self.game_frame.master.clear_game()
         else:
             x, y = (int(message[1]), int(message[4]))
             self.game_board[y][x].mark('Win', turn='O')
