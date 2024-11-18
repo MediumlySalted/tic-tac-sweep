@@ -137,6 +137,12 @@ class SPMenu(tk.Frame):
         self.game = None
 
         self.create_side_bar_elements()
+        self.minefield_frame = tk.Frame(
+            self,
+            bg=COLORS['background'].dark(.6),
+            borderwidth=5
+        )
+        self.minefield_frame.place(relx=.35, rely=.15, relwidth=.6, relheight=.8)
 
     def create_side_bar_elements(self):
         self.side_bar = tk.Frame(
@@ -209,14 +215,6 @@ class SPMenu(tk.Frame):
         )
         self.bomb_count.place(relx=.75, rely=.75, anchor='e')
 
-        # GAME ELEMENTS
-        self.minefield_frame = tk.Frame(
-            self,
-            bg=COLORS['background'].dark(.6),
-            borderwidth=5
-        )
-        self.minefield_frame.place(relx=.35, rely=.15, relwidth=.6, relheight=.8)
-
     def create_settings_box_elements(self):
         self.settings = Settings(
             self.side_bar,
@@ -252,9 +250,7 @@ class SPMenu(tk.Frame):
             widget.destroy()
 
     def update_info(self):
-        if self.game.game_state == 'Stopped': return
-        self.bomb_count.configure(text=self.game.total_bombs - self.game.total_flags)
-        if self.game.game_state not in {'Win', 'Lose'}: # Game still going
+        if self.game.game_state not in {'Win', 'Lose', 'Stopped'}: # Game still going
             self.time += 1
             self.timer.configure(text=f'{self.time // 600:02}:{(self.time // 10) % 60:02}.{self.time % 10}')
             self.controller.after(100, self.update_info)
@@ -296,7 +292,7 @@ class MPMenu(tk.Frame):
             bomb_percent=0.12,
             bomb_percent_range=(0.1, 0.2)
         )
-        self.settings.place(relx=.05, rely=.5, relwidth=.6, relheight=.8, anchor='w')
+        self.settings.place(relx=.025, rely=.5, relwidth=.6, relheight=.8, anchor='w')
         self.settings.create_size_display()
         self.settings.create_bomb_percent_display()
 
@@ -321,11 +317,32 @@ class MPMenu(tk.Frame):
             compound="center",
             command=self.end_game
         )
-        self.stop_btn.place(relx=.8, rely=.5, anchor='e')
+        self.stop_btn.place(relx=.775, rely=.5, anchor='e')
 
     def create_info_bar(self):
         self.info_bar = tk.Frame(self, bg=COLORS['background'].dark())
         self.info_bar.place(relx=.75, rely=.125, relwidth=.45, relheight=.15, anchor='n')
+
+        self.info_box = tk.Frame(
+            self.info_bar,
+            bg=COLORS['background'],
+        )
+        self.bomb_icon = tk.PhotoImage(file='assets/bomb.png')
+        self.bomb_label = tk.Label(
+            self.info_box,
+            image=self.bomb_icon,
+            background=COLORS['background'],
+            borderwidth=0,
+            compound="center",
+        )
+        self.bomb_count = tk.Label(
+            self.info_box,
+            text='0',
+            font=(GAME_FONT, 32),
+            justify='center',
+            fg=COLORS['yellow txt'],
+            background=COLORS["background"],
+        )
 
     def create_minesweeper_elements(self):
         self.minefield_frame = tk.Frame(
@@ -340,6 +357,7 @@ class MPMenu(tk.Frame):
         self.tictactoe_frame.place(relx=.025, rely=.3, width=self.relwidth, height=self.relheight)
 
     def start_game(self):
+        self.start_btn['state'] = 'disabled'
         self.game = TicTacToe(
             self.tictactoe_frame,
             self.relwidth,
@@ -355,7 +373,7 @@ class MPMenu(tk.Frame):
             font=(GAME_FONT, 32),
             justify='center',
             fg=COLORS['yellow txt'],
-            background=COLORS["background"],
+            background=COLORS["background"].dark(),
         )
         self.searching_display.place(relx=.05, rely=.5, anchor='w')
         self.stop_searching = threading.Event()
@@ -373,12 +391,15 @@ class MPMenu(tk.Frame):
 
     def game_found(self):
         self.game.match = self.match
-        for widget in self.info_bar.winfo_children():
-            widget.destroy()
+        self.searching_display.destroy()
         self.game.draw_canvas()
         self.game.create_buttons()
+        self.info_box.place(relx=.025, rely=.5, relwidth=.3, relheight=.9, anchor='w')
+        self.bomb_label.place(relx=.5, rely=.5, anchor='e')
+        self.bomb_count.place(relx=.5, rely=.5, anchor='w')
 
     def end_game(self):
+        self.start_btn['state'] = 'normal'
         if self.match:
             print("Search ended.")
             self.stop_searching.set()
@@ -543,6 +564,7 @@ class Settings(tk.Frame):
     def update_settings(self):
         self.size_display['text'] = f'{self.size:02}'
         self.bomb_percent_display['text'] = f'{self.bomb_percent * 100:.0f}%'
+
 
 def load_font(font_path):
     '''

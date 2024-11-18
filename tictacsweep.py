@@ -32,6 +32,7 @@ class Minesweeper:
                     relheight=1/self.size
                 )
                 self.cells[i].append(cell)
+        self.game_frame.master.bomb_count['text'] = self.total_bombs
 
     def reveal(self):
         for i in range(self.size):
@@ -55,6 +56,7 @@ class Minesweeper:
 class Cell:
     def __init__(self, minefield, game_frame, pos, is_bomb):
         self.minefield = minefield
+        self.game_frame = game_frame
         self.x_pos = pos[0]
         self.y_pos = pos[1]
         self.is_bomb = is_bomb
@@ -108,9 +110,12 @@ class Cell:
         if not self.is_flagged:
             self.minefield.total_flags += 1
             self.cell_btn.configure(image=self.minefield.flag_icon)
+            self.game_frame.master.bomb_count['text'] = f'{int(self.game_frame.master.bomb_count['text']) - 1}'
         else:
             self.minefield.total_flags -= 1
             self.cell_btn.configure(image='')
+            self.game_frame.master.bomb_count['text'] = f'{int(self.game_frame.master.bomb_count['text']) + 1}'
+
         self.is_flagged = not self.is_flagged
         self.minefield.check_for_win()
 
