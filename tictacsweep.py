@@ -1,5 +1,4 @@
 from assets import GAME_FONT, COLORS
-from matchmaker import Match
 import random
 import tkinter as tk
 
@@ -73,7 +72,7 @@ class Cell:
         self.cell_btn.bind('<Button-1>', self.sweep)
         self.cell_btn.bind('<Button-3>', self.flag)
 
-    def sweep(self, rec=False, event=None):
+    def sweep(self, recursive=False, event=None):
         if self.is_flagged and self.minefield.game_state == 'Playing': return
         if not self.is_swept: self.minefield.cells_left -= 1
         self.is_swept = True
@@ -90,16 +89,18 @@ class Cell:
             self.cell_btn.configure(background=COLORS['white'])
             surrounding_bombs, surrounding_flags = self.surrounding_cells()
             # Sweep surrounding cells
-            if surrounding_bombs == 0: rec = True
-            if surrounding_bombs - surrounding_flags <= 0 and rec:
+            if surrounding_bombs == 0: recursive = True
+            if surrounding_bombs - surrounding_flags <= 0 and recursive:
                 for i in range(max(0, self.y_pos-1), min(self.y_pos+2, self.minefield.size)):
                     for j in range(max(0, self.x_pos-1), min(self.x_pos+2, self.minefield.size)):
                         cell = self.minefield.cells[i][j]
                         if not cell.is_swept and not cell.is_flagged:
                             cell.sweep()
 
-            if surrounding_bombs > 0 and not self.is_flagged: self.cell_btn.configure(text=str(surrounding_bombs), font=(GAME_FONT, 24))
-            if self.is_flagged: self.cell_btn.configure(text='X', font=(GAME_FONT, 32), fg=COLORS['red x'], image='')
+            if surrounding_bombs > 0 and not self.is_flagged:
+                self.cell_btn.configure(text=str(surrounding_bombs), font=(GAME_FONT, 24))
+            if self.is_flagged:
+                self.cell_btn.configure(text='X', font=(GAME_FONT, 32), fg=COLORS['red x'], image='')
             if self.minefield.game_state == 'Playing': self.minefield.check_for_win()
 
     def flag(self, event=None):
@@ -127,15 +128,16 @@ class Cell:
 
 
 class TicTacToe:
-    def __init__(self, game_frame, width, height):
+    def __init__(self, game_frame, width, height, size=9, bomb_percent=0.12):
         self.game_frame = game_frame
         self.width = width
         self.height = height
         self.match = None
 
+        self.size = size
+        self.bomb_percent = bomb_percent
         self.game_state = None
         self.game_board = [[] for _ in range(3)]
-        self.turn = True
 
     def draw_canvas(self):
         game_canvas = tk.Canvas(
@@ -238,11 +240,16 @@ class TTTButton:
         if self.marked or self.tictactoe.game_state: return
         self.marked = 'Playing'
         self.tictactoe.game_state = 'Playing'
-        if self.tictactoe.turn: self.btn.configure(text='X', fg=COLORS['gray'])
-        if not self.tictactoe.turn: self.btn.configure(text='O', fg=COLORS['gray'].dark())
+        self.btn.configure(text='X', fg=COLORS['gray'])
         for widget in self.tictactoe.game_frame.master.minefield_frame.winfo_children():
             widget.destroy()
-        self.ms_game = Minesweeper(self.tictactoe.game_frame.master.minefield_frame, mp=True, ttt_button=self)
+        self.ms_game = Minesweeper(
+            self.tictactoe.game_frame.master.minefield_frame,
+            mp=True,
+            ttt_button=self,
+            size=self.tictactoe.size,
+            bomb_percent=self.tictactoe.bomb_percent
+        )
         self.ms_game.create_minefield()
 
     def mark(self, state, turn='X'):
@@ -252,7 +259,7 @@ class TTTButton:
         }
         if state == 'Win':
             if turn == 'X': self.tictactoe.match.send_message(self.pos)
-            if self.marked == 'Playing': self.ms_game.clear_game()
+            elif self.marked == 'Playing': self.ms_game.clear_game()
             self.marked = True
             self.btn.configure(text=turn, fg=mark_colors[turn])
             self.tictactoe.game_state = self.tictactoe.check_game_state()
