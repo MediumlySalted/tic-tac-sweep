@@ -69,7 +69,8 @@ class Cell:
             activebackground=COLORS['cell'].dark(),
             borderwidth=1,
             compound="center",
-            relief='ridge'
+            relief='ridge',
+            highlightthickness=0
         )
         self.cell_btn.bind('<Button-1>', self.sweep)
         self.cell_btn.bind('<Button-3>', self.flag)
@@ -249,7 +250,8 @@ class TTTButton:
             background=COLORS['background'].dark(.6),
             activebackground=COLORS['background'].dark(.5),
             borderwidth=0,
-            command=self.start_ms_game
+            command=self.start_ms_game,
+            highlightthickness=0
         )
         self.ms_game = None
 

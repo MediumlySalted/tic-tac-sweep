@@ -1,6 +1,5 @@
 import tkinter as tk
 import threading
-from ctypes import windll, byref, create_unicode_buffer
 from tictacsweep import Minesweeper, TicTacToe
 from assets import GAME_FONT, COLORS
 from matchmaker import Match
@@ -60,7 +59,8 @@ class MainMenu(tk.Frame):
             activebackground=COLORS['green btn'].dark(),
             borderwidth=0,
             compound="center",
-            command=lambda : controller.show_page(SPMenu)
+            command=lambda : controller.show_page(SPMenu),
+            highlightthickness=0
         )
         single_player_btn.place(
             relx=.135,
@@ -79,7 +79,8 @@ class MainMenu(tk.Frame):
             activebackground=COLORS['red btn'].dark(),
             borderwidth=0,
             compound="center",
-            command=lambda : controller.show_page(MPMenu)
+            command=lambda : controller.show_page(MPMenu),
+            highlightthickness=0
         )
         multiplayer_btn.place(
             relx=.515,
@@ -98,7 +99,8 @@ class MainMenu(tk.Frame):
             activebackground=COLORS['yellow btn'].dark(),
             borderwidth=0,
             compound="center",
-            command=lambda : controller.show_page(H2PMenu)
+            command=lambda : controller.show_page(H2PMenu),
+            highlightthickness=0
         )
         how_to_play_btn.place(
             relx=.135,
@@ -117,7 +119,8 @@ class MainMenu(tk.Frame):
             activebackground=COLORS['purple btn'].dark(),
             borderwidth=0,
             compound="center",
-            command=controller.quit
+            command=controller.quit,
+            highlightthickness=0
         )
         quit_btn.place(
             relx=.515,
@@ -159,7 +162,8 @@ class SPMenu(tk.Frame):
             activebackground=COLORS['background'].dark(),
             borderwidth=0,
             compound="center",
-            command=self.start_game
+            command=self.start_game,
+            highlightthickness=0
         )
         self.start_btn.place(relx=.97, rely=.05, anchor='ne')
 
@@ -171,7 +175,8 @@ class SPMenu(tk.Frame):
             activebackground=COLORS['background'].dark(),
             borderwidth=0,
             compound="center",
-            command=self.stop_game
+            command=self.stop_game,
+            highlightthickness=0
         )
         self.stop_btn.place(relx=.025, rely=.05, anchor='nw')
 
@@ -303,7 +308,8 @@ class MPMenu(tk.Frame):
             activebackground=COLORS['background'].dark(),
             borderwidth=0,
             compound="center",
-            command=self.start_game
+            command=self.start_game,
+            highlightthickness=0
         )
         self.start_btn.place(relx=.925, rely=.5, anchor='e')
         self.stop_icon = tk.PhotoImage(file='assets/stop.png')
@@ -314,7 +320,8 @@ class MPMenu(tk.Frame):
             activebackground=COLORS['background'].dark(),
             borderwidth=0,
             compound="center",
-            command=self.end_game
+            command=self.end_game,
+            highlightthickness=0
         )
         self.stop_btn.place(relx=.775, rely=.5, anchor='e')
 
@@ -479,7 +486,8 @@ class TopBar(tk.Frame):
             activebackground=COLORS['background'].dark(),
             borderwidth=0,
             compound="center",
-            command=self.parent.back
+            command=self.parent.back,
+            highlightthickness=0
         )
         self.back_btn.place(relx=.025, rely=0.5, anchor='w')
 
@@ -491,7 +499,8 @@ class TopBar(tk.Frame):
             activebackground=COLORS['background'].dark(),
             borderwidth=0,
             compound="center",
-            command=self.parent.controller.quit
+            command=self.parent.controller.quit,
+            highlightthickness=0
         )
         self.quit_btn.place(relx=.975, rely=0.5, anchor='e')
 
@@ -519,19 +528,27 @@ class Settings(tk.Frame):
         self.size_up_btn = tk.Button(
             self,
             image=self.up_icon,
+            fg=COLORS["background"],
+            activeforeground=COLORS["background"],
             background=COLORS['background'],
+            activebackground=COLORS['background'],
             borderwidth=0,
             compound="center",
-            command=self.size_up
+            command=self.size_up,
+            highlightthickness=0
         )
         self.size_up_btn.place(relx=.95, rely=.25, anchor='se')
         self.size_down_btn = tk.Button(
             self,
             image=self.down_icon,
+            fg=COLORS["background"],
+            activeforeground=COLORS["background"],
             background=COLORS['background'],
+            activebackground=COLORS['background'],
             borderwidth=0,
             compound="center",
-            command=self.size_down
+            command=self.size_down,
+            highlightthickness=0
         )
         self.size_down_btn.place(relx=.95, rely=.25, anchor='ne')
 
@@ -548,19 +565,27 @@ class Settings(tk.Frame):
         self.bomb_percent_up_btn = tk.Button(
             self,
             image=self.up_icon,
+            fg=COLORS["background"],
+            activeforeground=COLORS["background"],
             background=COLORS['background'],
+            activebackground=COLORS['background'],
             borderwidth=0,
             compound="center",
-            command=self.bomb_percent_up
+            command=self.bomb_percent_up,
+            highlightthickness=0
         )
         self.bomb_percent_up_btn.place(relx=.95, rely=.75, anchor='se')
         self.bomb_percent_down_btn = tk.Button(
             self,
             image=self.down_icon,
+            fg=COLORS["background"],
+            activeforeground=COLORS["background"],
             background=COLORS['background'],
+            activebackground=COLORS['background'],
             borderwidth=0,
             compound="center",
-            command=self.bomb_percent_down
+            command=self.bomb_percent_down,
+            highlightthickness=0
         )
         self.bomb_percent_down_btn.place(relx=.95, rely=.75, anchor='ne')
 
@@ -591,21 +616,6 @@ class Settings(tk.Frame):
         self.bomb_percent_display['text'] = f'{self.bomb_percent * 100:.0f}%'
 
 
-def load_font(font_path):
-    '''
-    Makes custom fonts available to the font system as a private
-    resource for the application to use.
-
-    font_path (str): file directory for the font. Ex: 'foldername/filename.ttf'
-    '''
-    if not isinstance(font_path, str):
-        raise ValueError("font_path needs to be a string. Ex: 'foldername/filename.ttf'")
-    
-    path_buffer = create_unicode_buffer(font_path)
-    windll.gdi32.AddFontResourceExW(byref(path_buffer), 0x10, 0)
-
-
 if __name__ == "__main__":
-    load_font("assets/RuneScape-Bold-12.ttf")
     root = Game()
     root.mainloop()
