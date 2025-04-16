@@ -259,6 +259,7 @@ class MultiPlayer(tk.Frame):
         self.relheight = 768 * .6
 
         self.setup_game_page()
+        self.create_tictactoe_frame()
 
     # ========= Page Initialization ========= #
     def setup_game_page(self):
@@ -266,7 +267,6 @@ class MultiPlayer(tk.Frame):
         self.create_settings_bar()
         self.create_info_bar()
         self.create_minesweeper_frame()
-        self.create_tictactoe_frame()
 
     def create_top_bar(self):
         self.top_bar = TopBar(self, "Multiplayer")
@@ -298,7 +298,7 @@ class MultiPlayer(tk.Frame):
 
         self.waiting_display = tk.Label(
             self.info_bar,
-            text=f'Waiting for player...',
+            text=f'Select your settings',
             font=(GAME_FONT, 32),
             justify='center',
             fg=COLORS['yellow txt'],
@@ -333,7 +333,9 @@ class MultiPlayer(tk.Frame):
 
     # ========= Game Initialization ========= #
     def host_game(self):
+        self.reset_tictactoe_widget()
         self.start_btn.config(state="disabled")
+        self.waiting_display.config(text="Waiting for player...")
 
         self.create_game()
         self.match = Match(self, board_size=self.game.size,
@@ -402,15 +404,25 @@ class MultiPlayer(tk.Frame):
             self.game.game_board[y][x].mark('Win', turn='O')
 
     # ============= Game Ending ============= #
+    def reset_tictactoe_widget(self):
+
+        def destroy_tictactoe_widgets(widget):
+            for child in widget.winfo_children():
+                destroy_tictactoe_widgets(child)
+                child.destroy
+        
+        destroy_tictactoe_widgets(self.tictactoe_frame)
+
     def end_game(self):
 
-        def destroy_all_widgets(widget):
+        def destroy_widgets(widget):
+            if widget == self.tictactoe_frame: return
             for child in widget.winfo_children():
-                destroy_all_widgets(child)
+                destroy_widgets(child)
                 child.destroy
 
         if self.match: self.match.stop()
-        if self.game: destroy_all_widgets(self)
+        if self.game: destroy_widgets(self)
 
         self.setup_game_page()
         self.match = None

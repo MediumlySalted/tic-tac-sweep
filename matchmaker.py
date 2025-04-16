@@ -8,7 +8,6 @@ BROADCAST_PORTS = range(6432, 6436)
 DISCOVERY_MESSAGE = b"TIC_TAC_SWEEP"
 JOIN_REQUEST = b"JOIN_REQUEST"
 JOIN_NOTICE = b"JOIN_NOTICE"
-RESPONSE_TIMEOUT = 1.0
 
 class Match:
     def __init__(self, session, board_size=None, bomb_percent=None):
@@ -122,7 +121,7 @@ class Match:
 
     def connect(self, host_port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.settimeout(RESPONSE_TIMEOUT)
+        sock.settimeout(1)
 
         try:
             print(f"Joining game hosted on port: {host_port}...")
@@ -205,7 +204,7 @@ class MatchSearch:
         # Sweep port range for connections
         for port in BROADCAST_PORTS:
             connection = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            connection.settimeout(RESPONSE_TIMEOUT)
+            connection.settimeout(0.25)
             sockets.append((connection, port))
 
         # Send out discover messages

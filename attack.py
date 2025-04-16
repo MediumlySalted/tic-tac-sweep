@@ -30,7 +30,7 @@ class Attack:
         while self.running.is_set():
             try:
                 response, addr = self.sock.recvfrom(1024)
-                print(f"\n{'-' * 20}\nResponse recieved from {addr}: \n{response}\n{'-' * 20}\n")
+                print(f"\n{'-' * 20}\nResponse recieved from {addr}: \n{response}\n{'-' * 20}\nEnter message ('QUIT' to stop): ", end="")
 
                 if response in ['QUIT', 'WIN', 'TIE']:
                     attack.close_connection()

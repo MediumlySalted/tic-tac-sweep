@@ -1,0 +1,6 @@
+
+[strace -e trace=network -f python3 main.py 2> strace_output.log]
+Runs the file and logs network related system calls
+
+grep -v 'recvmsg' strace_output.log > filtered_output.log
+Matches all lines that don't contain 'recvmsg' and outputs them in a filtered file
