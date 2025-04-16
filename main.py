@@ -1,14 +1,14 @@
+
 import tkinter as tk
 import threading
 from PIL import Image, ImageTk
-from tictacsweep import Minesweeper, TicTacToe
+from tictacsweep import Minesweeper, TicTacToe, TTTButton
 from assets import GAME_FONT, COLORS
-from matchmaker import Match, Matchmaker
+from matchmaker import Match, MatchSearch
 
 class Game(tk.Tk):
     def __init__(self): 
         tk.Tk.__init__(self)
-        self.matchmaker = Matchmaker()
 
         self.geometry("1024x768")
         self.title('Tic-Tac-Sweep')
@@ -254,74 +254,74 @@ class MultiPlayer(tk.Frame):
         self.controller = controller
         self.game = None
         self.match = None
-        self.available_matches = []
-        self.stop_searching = None
 
         self.relwidth = 1024 * .45
         self.relheight = 768 * .6
 
-        self.top_bar = TopBar(self, "Multiplayer")
-        self.top_bar.place(relx=0, rely=0, relwidth=1, relheight=.1)
+        self.setup_game_page()
 
-    def refresh_servers(self):
-        matches = self.controller.matchmaker.find_servers()
-        self.available_matches = matches
-        self.controller.pages[ServerListDisplay].update_servers(matches)
-
-    def join_selected_game(self):
-        index = self.controller.pages[ServerListDisplay].get_selected_index()
-        if index is None:
-            return
-        
-        connection = self.available_matches[index]
-        self.join_game(connection)
-
-    def host_game(self):
-        self.setup_game()
-        self.match = Match(self.game, host=True)
-        self.stop_searching = threading.Event()
-        threading.Thread(target=self.match.wait_for_player, args=(self.stop_searching,)).start()
-
-    def join_game(self, connection):
-        self.setup_game()
-        self.match = Match(self.game, connection=connection)
-
-    def setup_game(self):
+    # ========= Page Initialization ========= #
+    def setup_game_page(self):
+        self.create_top_bar()
         self.create_settings_bar()
         self.create_info_bar()
         self.create_minesweeper_frame()
         self.create_tictactoe_frame()
-        self.controller.show_page(MultiPlayer)
-        self.game = TicTacToe(
-            self.tictactoe_frame,
-            self.relwidth,
-            self.relheight,
-            size=self.settings.size,
-            bomb_percent=self.settings.bomb_percent
-        )
+
+    def create_top_bar(self):
+        self.top_bar = TopBar(self, "Multiplayer")
+        self.top_bar.place(relx=0, rely=0, relwidth=1, relheight=.1)
 
     def create_settings_bar(self):
         self.settings_bar = tk.Frame(self, bg=COLORS['background'].dark())
         self.settings_bar.place(relx=.25, rely=.125, relwidth=.45, relheight=.15, anchor='n')
+
         self.settings = Settings(
             self.settings_bar,
             size=9,
-            size_range=(8, 16),
+            size_range=(8, 14),
             bomb_percent=0.12,
-            bomb_percent_range=(0.1, 0.2)
+            bomb_percent_range=(0.09, 0.18)
         )
+        self.settings.place(relx=.025, rely=.5, relwidth=.6, relheight=.8, anchor='w')
+        self.settings.create_size_display()
+        self.settings.create_bomb_percent_display()
+
+        self.start_btn = ButtonIcon(self.settings_bar, 'assets/start.png', command=self.host_game)
+        self.start_btn.place(relx=.9, rely=.5, anchor='c')
+        self.stop_btn = ButtonIcon(self.settings_bar, 'assets/stop.png', command=self.end_game)
+        self.stop_btn.place(relx=.75, rely=.5, anchor='c')
 
     def create_info_bar(self):
         self.info_bar = tk.Frame(self, bg=COLORS['background'].dark())
         self.info_bar.place(relx=.75, rely=.125, relwidth=.45, relheight=.15, anchor='n')
+
         self.waiting_display = tk.Label(
             self.info_bar,
-            text="Waiting for player...",
+            text=f'Waiting for player...',
             font=(GAME_FONT, 32),
+            justify='center',
             fg=COLORS['yellow txt'],
-            bg=COLORS['background'].dark()
+            background=COLORS["background"].dark(),
         )
-        self.waiting_display.place(relx=0.05, rely=0.5, anchor='w')
+        self.waiting_display.place(relx=.05, rely=.5, anchor='w')
+
+        self.bomb_icon = tk.PhotoImage(file='assets/bomb.png')
+        self.bomb_label = tk.Label(
+            self.info_bar,
+            image=self.bomb_icon,
+            borderwidth=0,
+            compound="center",
+            background=COLORS["background"].dark(),
+        )
+        self.bomb_count = tk.Label(
+            self.info_bar,
+            text='0',
+            font=(GAME_FONT, 32),
+            justify='center',
+            fg=COLORS['yellow txt'],
+            background=COLORS["background"].dark(),
+        )
 
     def create_minesweeper_frame(self):
         self.minefield_frame = tk.Frame(self, bg=COLORS['background'].dark(.6), borderwidth=5)
@@ -331,19 +331,94 @@ class MultiPlayer(tk.Frame):
         self.tictactoe_frame = tk.Frame(self, bg=COLORS['background'].dark(.6))
         self.tictactoe_frame.place(relx=.025, rely=.3, width=self.relwidth, height=self.relheight)
 
-    def end_game(self):
-        if self.match: 
-            self.match.close_connection()
-            self.match = None
+    # ========= Game Initialization ========= #
+    def host_game(self):
+        self.start_btn.config(state="disabled")
 
-        if self.game:
-            self.game = None
-            for widget in [self.settings_bar, self.info_bar, self.minefield_frame, self.tictactoe_frame]:
-                if widget:
-                    widget.destroy()
+        self.create_game()
+        self.match = Match(self, board_size=self.game.size,
+                           bomb_percent=self.game.bomb_percent)
+        self.stop_searching = threading.Event()
+        self.match.start(self.stop_searching)
+
+    def join_game(self, server):
+        self.server = server
+        self.match = Match(self)
+        return self.match.connect(server['port'])
+
+    def create_game(self, board_size=None, bomb_percent=None):
+        if board_size: self.settings.size = board_size
+        if bomb_percent: self.settings.bomb_percent = bomb_percent
+        self.settings.update_settings()
+        self.game = TicTacToe(self, size=self.settings.size,
+                              bomb_percent=self.settings.bomb_percent)
+
+    def start_game(self):
+        self.draw_canvas()
+        self.create_buttons()
+
+    def update_info_bar(self):
+        self.waiting_display.destroy()
+        self.top_bar.title_text.config(text=f'Playing against: {self.match.connection[1]}')
+        self.bomb_count.config(text="0")
+        self.bomb_count.place(relx=.52, rely=.52, anchor='w')
+        self.bomb_label.place(relx=.48, rely=.5, anchor='e')
+
+    def draw_canvas(self):
+        game_canvas = tk.Canvas(
+            self.tictactoe_frame,
+            bg=COLORS['background'].dark(.6),
+            highlightthickness=0
+        )
+        game_canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
+        game_canvas.create_line(5, self.relheight/3, self.relwidth-5, self.relheight/3,
+                                fill=COLORS['background'], width=5)
+        game_canvas.create_line(5, 2*self.relheight/3, self.relwidth-5, 2*self.relheight/3,
+                                fill=COLORS['background'], width=5)
+        game_canvas.create_line(self.relwidth/3, 5, self.relwidth/3, self.relheight-5,
+                                fill=COLORS['background'], width=5)
+        game_canvas.create_line(2*self.relwidth/3, 5, 2*self.relwidth/3, self.relheight-5,
+                                fill=COLORS['background'], width=5)
+
+    def create_buttons(self):
+        for i in range(3):
+            for j in range(3):
+                btn = TTTButton(self.game, f'({j}, {i})')
+                btn.btn.place(x=j*self.relwidth/3+10, y=i*self.relheight/3+10,
+                              width=self.relwidth/3-20, height=self.relheight/3-20)
+                self.game.game_board[i].append(btn)
+
+    # ============ Game Updates ============ #
+    def update_game(self, message):
+        if message == 'QUIT':
+            self.match.connection = None
+            self.end_game()
+        elif message == 'WIN':
+            self.game.game_state = 'Lose'
+            self.end_game()
+        else:
+            x, y = (int(message[1]), int(message[4]))
+            print(x, y)
+            self.game.game_board[y][x].mark('Win', turn='O')
+
+    # ============= Game Ending ============= #
+    def end_game(self):
+
+        def destroy_all_widgets(widget):
+            for child in widget.winfo_children():
+                destroy_all_widgets(child)
+                child.destroy
+
+        if self.match: self.match.stop()
+        if self.game: destroy_all_widgets(self)
+
+        self.setup_game_page()
+        self.match = None
+        self.game = None
 
     def back(self):
         self.end_game()
+        self.controller.pages[ServerListDisplay].refresh_servers()
         self.controller.show_page(ServerListDisplay)
 
     def quit(self):
@@ -355,17 +430,23 @@ class ServerListDisplay(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent, background=COLORS['background'])
         self.controller = controller
+        self.matchsearch = MatchSearch()
+        self.server_entries = []
+        self.server_info = []
+        self.stop_searching = None
         self.selected_server = tk.IntVar(value=0)
-        self.entries = []
 
-        self.top_bar = TopBar(self, "Server Browser")
-        self.top_bar.place(relx=0, rely=0, relwidth=1, relheight=.1)
         self.create_widgets()
 
     def create_widgets(self):
+        # ========== TOP BAR ========== #
+        self.top_bar = TopBar(self, "Server Browser")
+        self.top_bar.place(relx=0, rely=0, relwidth=1, relheight=.1)
+        
+        # ===== CANVAS & SCROLLBAR ===== #
         self.canvas = tk.Canvas(self, background=COLORS['background'].dark(), highlightthickness=0)
         self.scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
-        self.scroll_frame = tk.Frame(self.canvas, background=COLORS['background'])
+        self.scroll_frame = tk.Frame(self.canvas, background=COLORS['background'].dark())
 
         self.scroll_frame.bind("<Configure>", lambda event: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
 
@@ -375,12 +456,13 @@ class ServerListDisplay(tk.Frame):
         self.canvas.place(relx=.1, rely=.15, relwidth=.8, relheight=.7)
         self.scrollbar.place(relx=0.9, rely=0.15, relheight=0.7)
 
+        # ======== Bottom Buttons ======== #
         self.refresh_btn = ButtonIcon(self, 'assets/reset.png', 
-                                      command=self.controller.pages[MultiPlayer].refresh_servers,)
+                                      command=self.refresh_servers,)
         self.refresh_btn.place(relx=0.2, rely=0.9, anchor='center')
 
         self.join_btn = ButtonIcon(self, 'assets/start.png',
-                                   command=self.controller.pages[MultiPlayer].join_selected_game,
+                                   command=self.join_selected_game,
         )
         self.join_btn.place(relx=0.5, rely=0.9, anchor='center')
 
@@ -394,32 +476,62 @@ class ServerListDisplay(tk.Frame):
             activebackground=COLORS['green btn'].dark(),
             borderwidth=0,
             compound="center",
-            command=self.controller.pages[MultiPlayer].host_game,
+            command=lambda : self.controller.show_page(MultiPlayer),
             highlightthickness=0
         )
         self.host_btn.place(relx=0.8, rely=0.9, anchor='center')
 
-    def update_servers(self, servers):
+    def refresh_servers(self):
+        self.clear_servers()
+
+        self.searching_label = tk.Label(
+            self.scroll_frame,
+            text="Searching for games...",
+            font=(GAME_FONT, 16),
+            fg=COLORS['yellow txt'],
+            background=COLORS['background'].dark()
+        )
+        self.searching_label.pack(pady=10)
+
+        thread = threading.Thread(target=self.discover_servers, daemon=True)
+        thread.start()
+
+    def discover_servers(self):
+        servers = self.matchsearch.discover_matches()
+        self.scroll_frame.after(0, lambda: self.update_servers(servers))
+
+    def clear_servers(self):
         for widget in self.scroll_frame.winfo_children():
             widget.destroy()
-        self.entries.clear()
+
+        self.server_entries.clear()
+        self.server_info.clear()
+
+    def update_servers(self, servers):
+        self.searching_label.destroy()
 
         for i, server in enumerate(servers):
             btn = tk.Radiobutton(
                 self.scroll_frame,
-                text=f"{server['name']} ({server['address']}:{server['port']})",
-                variable=self.selected_server,  # shared across all buttons
+                text=f"Id: {server['game_id']} | Port: {server['port']} | Board Size: {server['board_size']} | Bomb Percent: {round(server['bomb_percent'] * 100)}",
+                variable=self.selected_server,
                 value=i,
                 font=(GAME_FONT, 16),
                 fg=COLORS['yellow txt'],
-                background=COLORS['background'],
+                background=COLORS['background'].dark(),
                 selectcolor=COLORS['background']
             )
             btn.pack(anchor='w', padx=10, pady=5)
-            self.entries.append(btn)
+            self.server_entries.append(btn)
+            self.server_info.append(server)
 
-    def get_selected_index(self):
-        return self.selected_server.get()
+    def join_selected_game(self):
+        index = self.selected_server.get()
+        if index is None:
+            return
+        
+        server = self.server_info[index]
+        if self.controller.pages[MultiPlayer].join_game(server): self.controller.show_page(MultiPlayer)
 
     def back(self):
         self.controller.show_page(MainMenu)
@@ -529,7 +641,7 @@ class TopBar(tk.Frame):
         self.parent = parent
 
         # Title label
-        title_text = tk.Label(
+        self.title_text = tk.Label(
             self,
             text=menu_name,
             font=(GAME_FONT, 32),
@@ -537,7 +649,7 @@ class TopBar(tk.Frame):
             fg=COLORS['yellow txt'],
             background=COLORS["background"].dark(),
         )
-        title_text.place(relx=0.5, rely=0.5, anchor='center')
+        self.title_text.place(relx=0.5, rely=0.5, anchor='center')
 
         self.back_btn = ButtonIcon(self, 'assets/left.png',
                                    command=self.parent.back)
