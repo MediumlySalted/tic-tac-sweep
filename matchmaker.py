@@ -172,10 +172,10 @@ class Match:
         while self.running.is_set():
             if self.session.game.game_state not in {'Win', 'Lose', 'Tie'}:
                 try:
-                    data, addr = self.sock.recvfrom(1024)
-                    print(f"\n{'-' * 20}\nData recieved from {addr}: \n{data}\n{'-' * 20}\n")
+                    response, addr = self.sock.recvfrom(1024)
+                    print(f"\n{'-' * 20}\nResponse recieved from {addr}: \n{response}\n{'-' * 20}\n")
 
-                    message = data.decode()
+                    message = response.decode()
                     if message: self.session.update_game(message)
 
                 except socket.timeout: continue
