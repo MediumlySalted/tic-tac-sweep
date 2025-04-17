@@ -30,7 +30,7 @@ class Game(tk.Tk):
     def show_page(self, page_class):
         page = self.pages[page_class]
         page.tkraise()
-    
+
     def quit(self):
         self.destroy()
 
@@ -155,7 +155,7 @@ class SinglePlayer(tk.Frame):
         self.start_btn = ButtonIcon(self.side_bar, 'assets/start.png', hover_scale=1.1,
                                     command=self.start_game)
         self.start_btn.place(relx=.9, rely=.1, anchor='center')
-        
+
         self.stop_btn = ButtonIcon(self.side_bar, 'assets/stop.png', hover_scale=1.1,
                                    command=self.stop_game)
         self.stop_btn.place(relx=.09, rely=.1, anchor='center')
@@ -230,6 +230,7 @@ class SinglePlayer(tk.Frame):
         if self.game: self.game.game_state = 'Stopped'
         self.timer.configure(text=f'00:00.0')
         self.bomb_count.configure(text='0')
+
         for widget in self.minefield_frame.winfo_children():
             widget.destroy()
 
@@ -259,7 +260,7 @@ class MultiPlayer(tk.Frame):
         self.relheight = 768 * .6
 
         self.setup_game_page()
-        self.create_tictactoe_frame()
+        self.create_tictactoe_frame() # Kept out end_game widget resets
 
     # ========= Page Initialization ========= #
     def setup_game_page(self):
@@ -335,6 +336,7 @@ class MultiPlayer(tk.Frame):
     def host_game(self):
         self.reset_tictactoe_widget()
         self.start_btn.config(state="disabled")
+        self.start_btn.command = None
         self.waiting_display.config(text="Waiting for player...")
 
         self.create_game()
@@ -356,6 +358,8 @@ class MultiPlayer(tk.Frame):
                               bomb_percent=self.settings.bomb_percent)
 
     def start_game(self):
+        self.start_btn.config(state="disabled")
+        self.start_btn.command = None
         self.draw_canvas()
         self.create_buttons()
 
@@ -392,6 +396,7 @@ class MultiPlayer(tk.Frame):
 
     # ============ Game Updates ============ #
     def update_game(self, message):
+        # Updates game state from opponent
         if message == 'QUIT':
             self.match.connection = None
             self.end_game()
@@ -400,11 +405,14 @@ class MultiPlayer(tk.Frame):
             self.end_game()
         else:
             x, y = (int(message[1]), int(message[4]))
-            print(x, y)
             self.game.game_board[y][x].mark('Win', turn='O')
 
     # ============= Game Ending ============= #
     def reset_tictactoe_widget(self):
+        '''
+        Recursively delete tictactoe widgets and
+        recreate them
+        '''
 
         def destroy_tictactoe_widgets(widget):
             for child in widget.winfo_children():
@@ -413,18 +421,30 @@ class MultiPlayer(tk.Frame):
         
         destroy_tictactoe_widgets(self.tictactoe_frame)
 
+    def disable_tictactoe_buttons(self):
+        for child in self.tictactoe_frame.winfo_children():
+            if isinstance(child, tk.Button):
+                child.config(state='disabled', disabledforeground=child.cget("fg"))
+
     def end_game(self):
+        '''
+        Recursively Delete all widgets except for tictactoe widgets
+        and recreate them. Sends match stop incase there's a connection
+        and resets match and game to None
+        '''
 
         def destroy_widgets(widget):
-            if widget == self.tictactoe_frame: return
             for child in widget.winfo_children():
+                if child == self.tictactoe_frame: return
                 destroy_widgets(child)
-                child.destroy
+                child.destroy()
 
         if self.match: self.match.stop()
-        if self.game: destroy_widgets(self)
+        if self.game:
+            self.disable_tictactoe_buttons()
+            destroy_widgets(self)
+            self.setup_game_page()
 
-        self.setup_game_page()
         self.match = None
         self.game = None
 
@@ -509,6 +529,7 @@ class ServerListDisplay(tk.Frame):
         thread.start()
 
     def discover_servers(self):
+        # Threaded Function
         servers = self.matchsearch.discover_matches()
         self.scroll_frame.after(0, lambda: self.update_servers(servers))
 
@@ -525,7 +546,7 @@ class ServerListDisplay(tk.Frame):
         for i, server in enumerate(servers):
             btn = tk.Radiobutton(
                 self.scroll_frame,
-                text=f"Id: {server['game_id']} | Port: {server['port']} | Board Size: {server['board_size']} | Bomb Percent: {round(server['bomb_percent'] * 100)}",
+                text=f"{i} - Port: {server['port']} | Board Size: {server['board_size']} | Bomb Percent: {round(server['bomb_percent'] * 100)}",
                 variable=self.selected_server,
                 value=i,
                 font=(GAME_FONT, 16),
@@ -539,11 +560,11 @@ class ServerListDisplay(tk.Frame):
 
     def join_selected_game(self):
         index = self.selected_server.get()
-        if index is None:
-            return
-        
+        if index is None: return
+
         server = self.server_info[index]
-        if self.controller.pages[MultiPlayer].join_game(server): self.controller.show_page(MultiPlayer)
+        if self.controller.pages[MultiPlayer].join_game(server):
+            self.controller.show_page(MultiPlayer)
 
     def back(self):
         self.controller.show_page(MainMenu)
@@ -575,6 +596,9 @@ class Instructions(tk.Frame):
 
     def back(self):
         self.controller.show_page(MainMenu)
+
+    def quit(self):
+        self.controller.quit()
 
 
 class Settings(tk.Frame):
