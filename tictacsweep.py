@@ -117,11 +117,11 @@ class Cell:
         if not self.is_flagged:
             self.minefield.total_flags += 1
             self.cell_btn.configure(image=self.minefield.flag_icon)
-            self.game_frame.master.bomb_count['text'] = f'{int(self.game_frame.master.bomb_count['text']) - 1}'
+            self.game_frame.master.bomb_count['text'] = f'{int(self.game_frame.master.bomb_count["text"]) - 1}'
         else:
             self.minefield.total_flags -= 1
             self.cell_btn.configure(image='')
-            self.game_frame.master.bomb_count['text'] = f'{int(self.game_frame.master.bomb_count['text']) + 1}'
+            self.game_frame.master.bomb_count['text'] = f'{int(self.game_frame.master.bomb_count["text"]) + 1}'
 
         self.is_flagged = not self.is_flagged
         self.minefield.check_for_win()

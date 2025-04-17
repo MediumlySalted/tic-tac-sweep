@@ -140,6 +140,7 @@ class Match:
     def connect(self, host_port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(1)
+        sock.settimeout(1)
 
         try:
             print(f"Joining game on port {host_port}...")
