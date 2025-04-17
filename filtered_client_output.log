@@ -1,0 +1,50 @@
+socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 3
+connect(3, {sa_family=AF_UNIX, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 3
+connect(3, {sa_family=AF_UNIX, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC, 0) = 3
+connect(3, {sa_family=AF_UNIX, sun_path=@"/tmp/.X11-unix/X0"}, 20) = -1 ECONNREFUSED (Connection refused)
+socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC, 0) = 3
+getsockopt(3, SOL_SOCKET, SO_SNDBUF, [212992], [4]) = 0
+connect(3, {sa_family=AF_UNIX, sun_path="/tmp/.X11-unix/X0"}, 110) = 0
+getpeername(3, {sa_family=AF_UNIX, sun_path="/tmp/.X11-unix/X0"}, [124 => 20]) = 0
+recvfrom(3, "\1\0\v\0\0\0004\t", 8, 0, NULL, NULL) = 8
+recvfrom(3, "\20B\267\0\0\0\200\0\377\377\37\0\0\1\0\0\25\0\377\377\1\7\0\0  \10\377\0\0\0\0"..., 9424, 0, NULL, NULL) = 9424
+recvfrom(3, "\1\1\1\0X\377\10\20\0\0\0\0\1\1\1\0j\377\0\0\0\0\0\0\1\1\1\0e\377\10\20"..., 1316, 0, NULL, NULL) = 1316
+strace: Process 34298 attached
+[pid 34297] recvfrom(3, "[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0"..., 560, 0, NULL, NULL) = 560
+[pid 34297] recvfrom(3, "[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0"..., 1120, 0, NULL, NULL) = 1120
+strace: Process 34318 attached
+[pid 34318] socket(AF_INET, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_IP <unfinished ...>
+[pid 34318] <... socket resumed>)       = 7
+[pid 34318] socket(AF_INET, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_IP) = 8
+[pid 34318] socket(AF_INET, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_IP) = 9
+[pid 34318] socket(AF_INET, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_IP) = 10
+[pid 34297] recvfrom(3, "[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0", 32, 0, NULL, NULL) = 32
+[pid 34318] sendto(7, "gAAAAABoAHGd44kg7CDmW2ulf6e-DkiO"..., 120, 0, {sa_family=AF_INET, sin_port=htons(6432), sin_addr=inet_addr("127.0.0.1")}, 16) = 120
+[pid 34297] recvfrom(3, "[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0"..., 1120, 0, NULL, NULL) = 1120
+[pid 34318] recvfrom(7,  <unfinished ...>
+[pid 34318] <... recvfrom resumed>"gAAAAABoAHGdBZef2RliMFacEmbLMp3Z"..., 1024, 0, {sa_family=AF_INET, sin_port=htons(6432), sin_addr=inet_addr("127.0.0.1")}, [16]) = 184
+[pid 34318] sendto(8, "gAAAAABoAHGdfXWUpmlugowetknwRjX6"..., 120, 0, {sa_family=AF_INET, sin_port=htons(6433), sin_addr=inet_addr("127.0.0.1")}, 16 <unfinished ...>
+[pid 34318] <... sendto resumed>)       = 120
+[pid 34318] sendto(9, "gAAAAABoAHGdbE5EnjkTB53f7BRGRC4T"..., 120, 0, {sa_family=AF_INET, sin_port=htons(6434), sin_addr=inet_addr("127.0.0.1")}, 16) = 120
+[pid 34318] sendto(10, "gAAAAABoAHGd1_Gy4oyjkeDMWukb91F8"..., 120, 0, {sa_family=AF_INET, sin_port=htons(6435), sin_addr=inet_addr("127.0.0.1")}, 16) = 120
+[pid 34318] +++ exited with 0 +++
+[pid 34297] recvfrom(3, "[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0"..., 560, 0, NULL, NULL) = 560
+[pid 34297] recvfrom(3, "[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0[_f\0"..., 1120, 0, NULL, NULL) = 1120
+[pid 34297] socket(AF_INET, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_IP) = 7
+[pid 34297] sendto(7, "gAAAAABoAHGgg169_K8sNwbZN1zPd7X1"..., 100, 0, {sa_family=AF_INET, sin_port=htons(6432), sin_addr=inet_addr("127.0.0.1")}, 16) = 100
+[pid 34297] recvfrom(7, "gAAAAABoAHGgNg4aVHjd5k7sBMFBMZQu"..., 1024, 0, {sa_family=AF_INET, sin_port=htons(6432), sin_addr=inet_addr("127.0.0.1")}, [16]) = 204
+[pid 34297] sendto(7, "gAAAAABoAHGgHobdDEafKHFYIHpw3qn2"..., 100, 0, {sa_family=AF_INET, sin_port=htons(6432), sin_addr=inet_addr("127.0.0.1")}, 16) = 100
+strace: Process 34331 attached
+[pid 34297] recvfrom(3, "ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0"..., 560, 0, NULL, NULL) = 560
+[pid 34297] recvfrom(3, "ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0"..., 1120, 0, NULL, NULL) = 1120
+[pid 34297] sendto(7, "{\"message\": \"674141414141426f414"..., 296, 0, {sa_family=AF_INET, sin_port=htons(6432), sin_addr=inet_addr("127.0.0.1")}, 16) = 296
+[pid 34331] +++ exited with 0 +++
+[pid 34297] recvfrom(3, "ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0", 32, 0, NULL, NULL) = 32
+[pid 34297] recvfrom(3, "ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0"..., 624, 0, NULL, NULL) = 624
+[pid 34297] recvfrom(3, "ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0"..., 1152, 0, NULL, NULL) = 1152
+[pid 34297] recvfrom(3, "ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0"..., 560, 0, NULL, NULL) = 560
+[pid 34297] recvfrom(3, "ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0ILQ\0"..., 1120, 0, NULL, NULL) = 1120
+[pid 34298] +++ exited with 0 +++
++++ exited with 0 +++

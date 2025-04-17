@@ -30,7 +30,7 @@ class Game(tk.Tk):
     def show_page(self, page_class):
         page = self.pages[page_class]
         page.tkraise()
-    
+
     def quit(self):
         self.destroy()
 
@@ -155,7 +155,7 @@ class SinglePlayer(tk.Frame):
         self.start_btn = ButtonIcon(self.side_bar, 'assets/start.png', hover_scale=1.1,
                                     command=self.start_game)
         self.start_btn.place(relx=.9, rely=.1, anchor='center')
-        
+
         self.stop_btn = ButtonIcon(self.side_bar, 'assets/stop.png', hover_scale=1.1,
                                    command=self.stop_game)
         self.stop_btn.place(relx=.09, rely=.1, anchor='center')
@@ -230,6 +230,7 @@ class SinglePlayer(tk.Frame):
         if self.game: self.game.game_state = 'Stopped'
         self.timer.configure(text=f'00:00.0')
         self.bomb_count.configure(text='0')
+
         for widget in self.minefield_frame.winfo_children():
             widget.destroy()
 
@@ -513,7 +514,7 @@ class ServerListDisplay(tk.Frame):
         for i, server in enumerate(servers):
             btn = tk.Radiobutton(
                 self.scroll_frame,
-                text=f"Id: {server['game_id']} | Port: {server['port']} | Board Size: {server['board_size']} | Bomb Percent: {round(server['bomb_percent'] * 100)}",
+                text=f"{i} - Port: {server['port']} | Board Size: {server['board_size']} | Bomb Percent: {round(server['bomb_percent'] * 100)}",
                 variable=self.selected_server,
                 value=i,
                 font=(GAME_FONT, 16),

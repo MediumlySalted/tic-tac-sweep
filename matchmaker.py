@@ -1,14 +1,19 @@
-
 import socket
 import threading
 import random
 import json
+import hashlib
+import hmac
+import base64
+from cryptography.fernet import Fernet
 
 BROADCAST_PORTS = range(6432, 6436)
-DISCOVERY_MESSAGE = b"TIC_TAC_SWEEP"
-JOIN_REQUEST = b"JOIN_REQUEST"
-JOIN_NOTICE = b"JOIN_NOTICE"
-RESPONSE_TIMEOUT = 1.0
+GAME_KEY = base64.urlsafe_b64encode(hashlib.sha256(b"TIC_TAC_SWEEP").digest())
+GAME_CIPHER = Fernet(GAME_KEY)
+
+DISCOVERY_MESSAGE = "DISCOVERY_MESSAGE"
+JOIN_REQUEST = "JOIN_REQUEST"
+JOIN_NOTICE = "JOIN_NOTICE"
 
 class Match:
     def __init__(self, session, board_size=None, bomb_percent=None):
@@ -24,33 +29,51 @@ class Match:
         self.recv_thread = None
         self.waiting_thread = None
 
+        self.shared_secret = None
+        self.cipher = None
+
     def create_game_id(self):
         self.game_id = f"TicTacSweepGame{random.randint(1000, 9999)}"
 
+    def derive_shared_key(self):
+        self.shared_secret = hashlib.sha256(self.game_id.encode()).digest()
+        self.cipher = Fernet(base64.urlsafe_b64encode(self.shared_secret))
+
+    def sign_message(self, message_bytes):
+        return hmac.new(self.shared_secret, message_bytes, hashlib.sha256).hexdigest()
+
+    def verify_signature(self, message_bytes, signature):
+        try:
+            expected = hmac.new(self.shared_secret, message_bytes, hashlib.sha256).hexdigest()
+            return hmac.compare_digest(expected, signature)
+        
+        except Exception as e:
+            print(f"ERROR [verify_signature]: {e}")
+            self.stop()
+
     def create_host_port(self):
         print("\nFinding port...")
+
         for port in BROADCAST_PORTS:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 sock.bind(("127.0.0.1", port))
                 self.sock = sock
                 self.host_port = port
-                print(f'Port found! Hosting game on port: {self.host_port}')
+                print(f"Port found! Hosting game on port: {self.host_port}")
                 return
             
-            except OSError as e:
-                print(f"ERROR [{e}] - Port {port} in use")
-                continue
+            except OSError as e: print(f"Port {port} in use: {e}")
 
-        raise RuntimeError("ERROR - No available ports.")
+        raise RuntimeError("No available ports.")
 
     def start(self, stop_searching):
-        print("\nStarting game")
+        print("\nStarting game...")
         self.host = True
         self.running.set()
-        
         self.create_host_port()
         self.create_game_id()
+        self.derive_shared_key()
 
         self.waiting_thread = threading.Thread(target=self.listen, daemon=True, args=(stop_searching,))
         self.waiting_thread.start()
@@ -60,58 +83,52 @@ class Match:
         self.running.clear()
 
         if self.connection:
-            self.send_message('QUIT')
+            self.send_message("QUIT")
             self.connection = None
 
-        # Ensure the waiting thread is cleaned up
-        if self.waiting_thread and self.waiting_thread.is_alive():
-            if threading.current_thread() != self.waiting_thread:
-                print("Waiting for search thread to stop...")
-                self.waiting_thread.join()
-                print("Search thread stopped!")
-            else: print("Skipping join on waiting_thread (self-join)")
+        # Clean up running threads
+        for thread in [self.waiting_thread, self.recv_thread]:
+            if thread and thread.is_alive() and threading.current_thread() != thread:
+                thread.join()
 
-        # Ensure the receiving thread is cleaned up
-        if self.recv_thread and self.recv_thread.is_alive():
-            if threading.current_thread() != self.recv_thread:
-                print("Waiting for receive thread to stop...")
-                self.recv_thread.join()
-                print("Receive thread stopped!")
-            else: print("Skipping join on recv_thread (self-join)")
-        
         if self.sock:
             try: self.sock.close()
-            except Exception as e: print(f"ERROR [While closing socket]: {e}")
+            except Exception as e: print(f"Socket close error: {e}")
             self.sock = None
 
-        print("Match ended!")
+        print("Match ended.")
 
     def listen(self, stop_searching):
-        print("\nWaiting for connection...")
+        print("Waiting for connection...")
         self.sock.settimeout(0.5)
+        join_connection = None
+
         while self.running.is_set() and not stop_searching.is_set():
             try:
                 data, addr = self.sock.recvfrom(1024)
-                if data == DISCOVERY_MESSAGE:
-                    response = json.dumps({
-                        "game_id": self.game_id,
+
+                try: decrypted = GAME_CIPHER.decrypt(data).decode()
+                except Exception:  continue
+
+                if decrypted == DISCOVERY_MESSAGE:
+                    response = {
                         "port": self.host_port,
                         "board_size": self.board_size,
                         "bomb_percent": self.bomb_percent,
-                    }).encode()
-                    self.sock.sendto(response, addr)
+                    }
+                    self.sock.sendto(GAME_CIPHER.encrypt(json.dumps(response).encode()), addr)
 
-                elif data == JOIN_REQUEST:
+                elif decrypted == JOIN_REQUEST:
                     join_connection = addr
                     print(f"Player found at {addr}")
-
-                    settings = json.dumps({
+                    match_info = {
+                        "game_id": self.game_id,
                         "board_size": self.board_size,
                         "bomb_percent": self.bomb_percent
-                    }).encode()
-                    self.sock.sendto(settings, addr)
+                    }
+                    self.sock.sendto(GAME_CIPHER.encrypt(json.dumps(match_info).encode()), addr)
 
-                elif data == JOIN_NOTICE and addr == join_connection:
+                elif decrypted == JOIN_NOTICE and addr == join_connection:
                     print("Player joined!")
                     self.running.clear()
                     self.connection = join_connection
@@ -122,47 +139,44 @@ class Match:
 
     def connect(self, host_port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.settimeout(RESPONSE_TIMEOUT)
+        sock.settimeout(1)
 
         try:
-            print(f"Joining game hosted on port: {host_port}...")
-            sock.sendto(JOIN_REQUEST, ("127.0.0.1", host_port))
+            print(f"Joining game on port {host_port}...")
+            sock.sendto(GAME_CIPHER.encrypt(JOIN_REQUEST.encode()), ("127.0.0.1", host_port))
 
             data, addr = sock.recvfrom(1024)
-            print("Received settings from host:", data)
+            settings = json.loads(GAME_CIPHER.decrypt(data).decode())
 
-            settings = json.loads(data.decode())
+            self.game_id = settings["game_id"]
             self.board_size = settings["board_size"]
             self.bomb_percent = settings["bomb_percent"]
+            self.derive_shared_key()
+
             self.connection = addr
             self.sock = sock
 
-            sock.sendto(JOIN_NOTICE, addr)
+            sock.sendto(GAME_CIPHER.encrypt(JOIN_NOTICE.encode()), addr)
+            print("Sent join notice.")
 
-            print("Sent join confirmation to host.")
             self.session.create_game(self.board_size, self.bomb_percent)
             self.start_communication()
             return True
 
-        except socket.timeout as e:
-            print(f'ERROR [Socket Timeout]: {e}')
-            self.stop()
-            return False
-
-        except json.JSONDecodeError as e:
-            print(f"ERROR [JSONDecodeError]: {e}")
-            self.stop()
-            return False
-
         except Exception as e:
-            print(f"ERROR [Unexpected exception]: {e}")
+            print(f"Connect error: {e}")
             self.stop()
             return False
 
     def start_communication(self):
         self.session.update_info_bar()
         self.session.start_game()
-        print("Starting communication...")
+
+        print(f"\n\n=========== Communication started ===========")
+        print(f"Game ID: {self.game_id}")
+        print(f"Shared Secret: {self.shared_secret}")
+        print(f"Connected to: {self.connection}\n")
+
         self.running.set()
         self.sock.settimeout(0.1)
         self.recv_thread = threading.Thread(target=self.receive_messages, daemon=True)
@@ -170,27 +184,40 @@ class Match:
 
     def receive_messages(self):
         while self.running.is_set():
-            if self.session.game.game_state not in {'Win', 'Lose', 'Tie'}:
-                try:
-                    response, addr = self.sock.recvfrom(1024)
-                    print(f"\n{'-' * 20}\nResponse recieved from {addr}: \n{response}\n{'-' * 20}\n")
+            if self.session.game.game_state in {"Win", "Lose", "Tie"}: continue
 
-                    message = response.decode()
-                    if message: self.session.update_game(message)
+            try:
+                response, _ = self.sock.recvfrom(1024)
+                payload = json.loads(response.decode())
+                encrypted_data = bytes.fromhex(payload["message"])
 
-                except socket.timeout: continue
+                if not self.verify_signature(encrypted_data, payload["signature"]):
+                    print("Message blocked.")
+                    continue
 
-                except Exception as e:
-                    print(f"ERROR [Unexpected exception]: {e}")
-                    self.stop()
+                decrypted = self.cipher.decrypt(encrypted_data).decode()
+                print(f"Decrypted message: {decrypted}")
+                if decrypted: self.session.update_game(decrypted)
+
+            except (socket.timeout, json.JSONDecodeError, KeyError): continue
+
+            except Exception as e:
+                print(f"Receive error: {e}")
+                self.stop()
 
     def send_message(self, message):
         try:
-            print(f"\n{'-' * 20}\nSending message: \n{message}\n{'-' * 20}\n")
-            data = message.encode()
-            self.sock.sendto(data, self.connection)
+            encrypted = self.cipher.encrypt(message.encode())
+            signature = self.sign_message(encrypted)
 
-        except Exception as e: print(f"ERROR [Unexpected exception]: {e}")
+            payload = json.dumps({
+                "message": encrypted.hex(),
+                "signature": signature
+            }).encode()
+
+            self.sock.sendto(payload, self.connection)
+
+        except Exception as e: print(f"Send error: {e}")
 
 
 class MatchSearch:
@@ -198,26 +225,25 @@ class MatchSearch:
         self.matches = []
 
     def discover_matches(self):
-        print("Looking for matches...")
+        print("\nLooking for matches...")
         self.matches.clear()
         sockets = []
 
-        # Sweep port range for connections
         for port in BROADCAST_PORTS:
-            connection = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            connection.settimeout(RESPONSE_TIMEOUT)
-            sockets.append((connection, port))
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.settimeout(0.25)
+            sockets.append((s, port))
 
-        # Send out discover messages
-        for connection, port in sockets:
+        for sock, port in sockets:
             try:
-                connection.sendto(DISCOVERY_MESSAGE, ("127.0.0.1", port))
-                data, _ = connection.recvfrom(1024)
-                match = json.loads(data.decode())
+                sock.sendto(GAME_CIPHER.encrypt(DISCOVERY_MESSAGE.encode()), ("127.0.0.1", port))
+                data, _ = sock.recvfrom(1024)
+                match = json.loads(GAME_CIPHER.decrypt(data).decode())
                 self.matches.append(match)
 
-            except (socket.timeout, json.JSONDecodeError): pass
-            finally: connection.close()
+            except (socket.timeout, json.JSONDecodeError, Exception): pass
 
-        print(f'Done! Found {len(self.matches)}')
+            finally: sock.close()
+
+        print(f"Found {len(self.matches)} matches.")
         return self.matches
