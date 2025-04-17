@@ -260,7 +260,7 @@ class MultiPlayer(tk.Frame):
         self.relheight = 768 * .6
 
         self.setup_game_page()
-        self.create_tictactoe_frame()
+        self.create_tictactoe_frame() # Kept out end_game widget resets
 
     # ========= Page Initialization ========= #
     def setup_game_page(self):
@@ -393,6 +393,7 @@ class MultiPlayer(tk.Frame):
 
     # ============ Game Updates ============ #
     def update_game(self, message):
+        # Updates game state from opponent
         if message == 'QUIT':
             self.match.connection = None
             self.end_game()
@@ -401,11 +402,14 @@ class MultiPlayer(tk.Frame):
             self.end_game()
         else:
             x, y = (int(message[1]), int(message[4]))
-            print(x, y)
             self.game.game_board[y][x].mark('Win', turn='O')
 
     # ============= Game Ending ============= #
     def reset_tictactoe_widget(self):
+        '''
+        Recursively delete tictactoe widgets and
+        recreate them
+        '''
 
         def destroy_tictactoe_widgets(widget):
             for child in widget.winfo_children():
@@ -414,18 +418,30 @@ class MultiPlayer(tk.Frame):
         
         destroy_tictactoe_widgets(self.tictactoe_frame)
 
+    def disable_tictactoe_buttons(self):
+        for child in self.tictactoe_frame.winfo_children():
+            if isinstance(child, tk.Button):
+                child.config(state='disabled', disabledforeground=child.cget("fg"))
+
     def end_game(self):
+        '''
+        Recursively Delete all widgets except for tictactoe widgets
+        and recreate them. Sends match stop incase there's a connection
+        and resets match and game to None
+        '''
 
         def destroy_widgets(widget):
-            if widget == self.tictactoe_frame: return
             for child in widget.winfo_children():
+                if child == self.tictactoe_frame: return
                 destroy_widgets(child)
-                child.destroy
+                child.destroy()
 
         if self.match: self.match.stop()
-        if self.game: destroy_widgets(self)
+        if self.game:
+            self.disable_tictactoe_buttons()
+            destroy_widgets(self)
+            self.setup_game_page()
 
-        self.setup_game_page()
         self.match = None
         self.game = None
 
@@ -510,6 +526,7 @@ class ServerListDisplay(tk.Frame):
         thread.start()
 
     def discover_servers(self):
+        # Threaded Function
         servers = self.matchsearch.discover_matches()
         self.scroll_frame.after(0, lambda: self.update_servers(servers))
 
@@ -540,11 +557,11 @@ class ServerListDisplay(tk.Frame):
 
     def join_selected_game(self):
         index = self.selected_server.get()
-        if index is None:
-            return
-        
+        if index is None: return
+
         server = self.server_info[index]
-        if self.controller.pages[MultiPlayer].join_game(server): self.controller.show_page(MultiPlayer)
+        if self.controller.pages[MultiPlayer].join_game(server):
+            self.controller.show_page(MultiPlayer)
 
     def back(self):
         self.controller.show_page(MainMenu)
@@ -576,6 +593,9 @@ class Instructions(tk.Frame):
 
     def back(self):
         self.controller.show_page(MainMenu)
+
+    def quit(self):
+        self.controller.quit()
 
 
 class Settings(tk.Frame):

@@ -52,6 +52,10 @@ class Match:
             self.stop()
 
     def create_host_port(self):
+        '''
+        Search for an avaiable port to host on
+        within the designated range of ports
+        '''
         print("\nFinding port...")
 
         for port in BROADCAST_PORTS:
@@ -68,6 +72,7 @@ class Match:
         raise RuntimeError("No available ports.")
 
     def start(self, stop_searching):
+        # Called by host (not client)
         print("\nStarting game...")
         self.host = True
         self.running.set()
@@ -79,9 +84,14 @@ class Match:
         self.waiting_thread.start()
 
     def stop(self):
+        '''
+        Called internally and from game loop to end match communications,
+        close threads, close sockets, and send quit messages on internal errors
+        '''
         print("\nStopping Match...")
         self.running.clear()
 
+        # Send quit message incase of an internal error
         if self.connection:
             self.send_message("QUIT")
             self.connection = None
@@ -96,20 +106,24 @@ class Match:
             except Exception as e: print(f"Socket close error: {e}")
             self.sock = None
 
-        print("Match ended.")
+        print(f"{'='*12} Match ended {'='*12}\n\n")
 
     def listen(self, stop_searching):
-        print("Waiting for connection...")
+        '''
+        Host related function to advertise an open connection to
+        other players searching and starts game on join
+        '''
+        print("\nWaiting for connection...")
         self.sock.settimeout(0.5)
         join_connection = None
 
         while self.running.is_set() and not stop_searching.is_set():
             try:
                 data, addr = self.sock.recvfrom(1024)
-
                 try: decrypted = GAME_CIPHER.decrypt(data).decode()
                 except Exception:  continue
 
+                # Respond to discovery messages
                 if decrypted == DISCOVERY_MESSAGE:
                     response = {
                         "port": self.host_port,
@@ -118,6 +132,7 @@ class Match:
                     }
                     self.sock.sendto(GAME_CIPHER.encrypt(json.dumps(response).encode()), addr)
 
+                # Respond to join messages with key and settings
                 elif decrypted == JOIN_REQUEST:
                     join_connection = addr
                     print(f"Player found at {addr}")
@@ -128,6 +143,7 @@ class Match:
                     }
                     self.sock.sendto(GAME_CIPHER.encrypt(json.dumps(match_info).encode()), addr)
 
+                # Starts game on player join
                 elif decrypted == JOIN_NOTICE and addr == join_connection:
                     print("Player joined!")
                     self.running.clear()
@@ -140,26 +156,28 @@ class Match:
     def connect(self, host_port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(1)
-        sock.settimeout(1)
 
         try:
+            # Join game
             print(f"Joining game on port {host_port}...")
             sock.sendto(GAME_CIPHER.encrypt(JOIN_REQUEST.encode()), ("127.0.0.1", host_port))
 
             data, addr = sock.recvfrom(1024)
             settings = json.loads(GAME_CIPHER.decrypt(data).decode())
 
+            # Setting Match attributes
             self.game_id = settings["game_id"]
             self.board_size = settings["board_size"]
             self.bomb_percent = settings["bomb_percent"]
             self.derive_shared_key()
-
             self.connection = addr
             self.sock = sock
 
+            # Signaling host to start the game
             sock.sendto(GAME_CIPHER.encrypt(JOIN_NOTICE.encode()), addr)
             print("Sent join notice.")
 
+            # Start game
             self.session.create_game(self.board_size, self.bomb_percent)
             self.start_communication()
             return True
@@ -170,12 +188,14 @@ class Match:
             return False
 
     def start_communication(self):
+        # Game start stuff and message receive thread creation
         self.session.update_info_bar()
         self.session.start_game()
 
-        print(f"\n\n=========== Communication started ===========")
+        print(f"\n\n{'='*12} Communication started {'='*12}")
         print(f"Game ID: {self.game_id}")
         print(f"Shared Secret: {self.shared_secret}")
+        print(f"Cipher: {self.cipher}")
         print(f"Connected to: {self.connection}\n")
 
         self.running.set()
@@ -184,6 +204,7 @@ class Match:
         self.recv_thread.start()
 
     def receive_messages(self):
+        # Receive messages thread for mid-game communication
         while self.running.is_set():
             if self.session.game.game_state in {"Win", "Lose", "Tie"}: continue
 
@@ -193,32 +214,35 @@ class Match:
                 encrypted_data = bytes.fromhex(payload["message"])
 
                 if not self.verify_signature(encrypted_data, payload["signature"]):
-                    print("Message blocked.")
+                    print("Message blocked!")
                     continue
 
                 decrypted = self.cipher.decrypt(encrypted_data).decode()
-                print(f"Decrypted message: {decrypted}")
+                print(f"Received message: {decrypted}")
                 if decrypted: self.session.update_game(decrypted)
 
             except (socket.timeout, json.JSONDecodeError, KeyError): continue
 
             except Exception as e:
-                print(f"Receive error: {e}")
+                print(f"ERROR [Unexpected exception in receive_messages()]: {e}")
                 self.stop()
 
     def send_message(self, message):
         try:
             encrypted = self.cipher.encrypt(message.encode())
             signature = self.sign_message(encrypted)
-
             payload = json.dumps({
                 "message": encrypted.hex(),
                 "signature": signature
             }).encode()
 
+            print(f"Sending message: {message}")
+
             self.sock.sendto(payload, self.connection)
 
-        except Exception as e: print(f"Send error: {e}")
+        except Exception as e: 
+            print(f"ERROR [Unexpected exception in receive_messages()]: {e}")
+            self.stop()
 
 
 class MatchSearch:
@@ -226,15 +250,21 @@ class MatchSearch:
         self.matches = []
 
     def discover_matches(self):
+        '''
+        Looks for players hosting games within the port
+        range and returns a list of joinable matches
+        '''
         print("\nLooking for matches...")
         self.matches.clear()
         sockets = []
 
+        # Creates sockets for messaging the different ports
         for port in BROADCAST_PORTS:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.settimeout(0.25)
-            sockets.append((s, port))
-
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.settimeout(0.25)
+            sockets.append((sock, port))
+        
+        # Messages each socket to find ones that are hosting games
         for sock, port in sockets:
             try:
                 sock.sendto(GAME_CIPHER.encrypt(DISCOVERY_MESSAGE.encode()), ("127.0.0.1", port))
@@ -244,6 +274,7 @@ class MatchSearch:
 
             except (socket.timeout, json.JSONDecodeError, Exception): pass
 
+            # Closes each socket
             finally: sock.close()
 
         print(f"Found {len(self.matches)} matches.")
