@@ -336,6 +336,7 @@ class MultiPlayer(tk.Frame):
     def host_game(self):
         self.reset_tictactoe_widget()
         self.start_btn.config(state="disabled")
+        self.start_btn.command = None
         self.waiting_display.config(text="Waiting for player...")
 
         self.create_game()
@@ -357,6 +358,8 @@ class MultiPlayer(tk.Frame):
                               bomb_percent=self.settings.bomb_percent)
 
     def start_game(self):
+        self.start_btn.config(state="disabled")
+        self.start_btn.command = None
         self.draw_canvas()
         self.create_buttons()
 
