@@ -154,6 +154,7 @@ class Match:
             except socket.timeout: continue
 
     def connect(self, host_port):
+        # Called by client (not host)
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(1)
 
@@ -195,7 +196,6 @@ class Match:
         print(f"\n\n{'='*12} Communication started {'='*12}")
         print(f"Game ID: {self.game_id}")
         print(f"Shared Secret: {self.shared_secret}")
-        print(f"Cipher: {self.cipher}")
         print(f"Connected to: {self.connection}\n")
 
         self.running.set()
