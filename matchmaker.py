@@ -46,7 +46,7 @@ class Match:
         try:
             expected = hmac.new(self.shared_secret, message_bytes, hashlib.sha256).hexdigest()
             return hmac.compare_digest(expected, signature)
-        
+
         except Exception as e:
             print(f"ERROR [verify_signature]: {e}")
             self.stop()
@@ -241,7 +241,7 @@ class Match:
             self.sock.sendto(payload, self.connection)
 
         except Exception as e: 
-            print(f"ERROR [Unexpected exception in receive_messages()]: {e}")
+            print(f"ERROR [Unexpected exception in send_messages()]: {e}")
             self.stop()
 
 
